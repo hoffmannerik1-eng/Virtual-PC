@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Virtual PC</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    user-select:none;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Segoe UI,Arial,sans-serif;
+    background:#07101b;
+    color:white;
+}
+
+body{
+    background:
+      radial-gradient(circle at 20% 20%,#15365b 0%,transparent 35%),
+      radial-gradient(circle at 80% 70%,#172c55 0%,transparent 35%),
+      linear-gradient(135deg,#050b13,#091522 55%,#050910);
+}
+
+/* DESKTOP */
+
+#desktop{
+    position:absolute;
+    inset:0 0 62px 0;
+    overflow:hidden;
+}
+
+.wallpaper{
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 50% 45%,rgba(0,145,255,.18),transparent 30%),
+      linear-gradient(135deg,#06101c,#081c31,#07101c);
+}
+
+.wallpaper:after{
+    content:"";
+    position:absolute;
+    width:600px;
+    height:600px;
+    border-radius:50%;
+    border:1px solid rgba(0,190,255,.12);
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:
+      0 0 100px rgba(0,150,255,.12),
+      inset 0 0 100px rgba(0,150,255,.08);
+}
+
+/* ICONS */
+
+.desktop-icons{
+    position:absolute;
+    top:25px;
+    left:20px;
+    display:grid;
+    grid-template-columns:90px;
+    gap:14px;
+    z-index:3;
+}
+
+.desktop-icon{
+    width:82px;
+    min-height:82px;
+    padding:7px;
+    border-radius:10px;
+    text-align:center;
+    cursor:pointer;
+    transition:.15s;
+}
+
+.desktop-icon:hover{
+    background:rgba(255,255,255,.10);
+}
+
+.desktop-icon:active{
+    transform:scale(.95);
+}
+
+.icon-img{
+    font-size:38px;
+    margin-bottom:5px;
+}
+
+.icon-name{
+    font-size:12px;
+    text-shadow:0 2px 4px black;
+}
+
+/* TASKBAR */
+
+#taskbar{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:62px;
+    background:rgba(7,12,20,.82);
+    backdrop-filter:blur(22px);
+    border-top:1px solid rgba(255,255,255,.10);
+    display:flex;
+    align-items:center;
+    z-index:99999;
+}
+
+.start{
+    width:62px;
+    height:62px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:27px;
+    cursor:pointer;
+}
+
+.start:hover{
+    background:rgba(255,255,255,.08);
+}
+
+.task-apps{
+    display:flex;
+    gap:4px;
+    height:100%;
+    align-items:center;
+}
+
+.task-app{
+    width:50px;
+    height:50px;
+    border-radius:9px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:25px;
+    cursor:pointer;
+}
+
+.task-app:hover{
+    background:rgba(255,255,255,.08);
+}
+
+.system{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding-right:16px;
+    font-size:13px;
+}
+
+.online{
+    color:#55ffa2;
+}
+
+/* START MENU */
+
+#startMenu{
+    position:absolute;
+    bottom:72px;
+    left:10px;
+    width:440px;
+    height:560px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(10,17,27,.94);
+    backdrop-filter:blur(25px);
+    border-radius:18px;
+    box-shadow:0 25px 80px rgba(0,0,0,.6);
+    display:none;
+    z-index:100000;
+    padding:22px;
+}
+
+.start-title{
+    font-size:23px;
+    font-weight:600;
+    margin-bottom:18px;
+}
+
+.start-search{
+    width:100%;
+    height:42px;
+    border:0;
+    border-radius:9px;
+    background:#182533;
+    color:white;
+    padding:0 14px;
+    outline:none;
+    margin-bottom:20px;
+}
+
+.apps-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+
+.start-app{
+    padding:14px 6px;
+    border-radius:10px;
+    text-align:center;
+    cursor:pointer;
+}
+
+.start-app:hover{
+    background:rgba(255,255,255,.08);
+}
+
+.start-app div:first-child{
+    font-size:27px;
+}
+
+.start-app span{
+    font-size:11px;
+    display:block;
+    margin-top:6px;
+}
+
+/* WINDOWS */
+
+.window{
+    position:absolute;
+    left:180px;
+    top:100px;
+    width:780px;
+    height:530px;
+    min-width:320px;
+    min-height:220px;
+    background:rgba(14,22,32,.96);
+    border:1px solid rgba(255,255,255,.13);
+    border-radius:13px;
+    overflow:hidden;
+    box-shadow:0 25px 100px rgba(0,0,0,.55);
+    display:none;
+    z-index:10;
+}
+
+.window.active{
+    box-shadow:
+      0 30px 100px rgba(0,0,0,.65),
+      0 0 0 1px rgba(0,160,255,.08);
+}
+
+.titlebar{
+    height:45px;
+    display:flex;
+    align-items:center;
+    background:rgba(20,29,40,.96);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    cursor:grab;
+}
+
+.titlebar:active{
+    cursor:grabbing;
+}
+
+.title{
+    flex:1;
+    padding-left:16px;
+    font-size:13px;
+    font-weight:500;
+}
+
+.window-buttons{
+    display:flex;
+    height:100%;
+}
+
+.wbtn{
+    width:45px;
+    height:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    cursor:pointer;
+}
+
+.wbtn:hover{
+    background:rgba(255,255,255,.08);
+}
+
+.wbtn.close:hover{
+    background:#d93b48;
+}
+
+.content{
+    height:calc(100% - 45px);
+    overflow:auto;
+}
+
+/* FILE EXPLORER */
+
+.explorer{
+    display:flex;
+    height:100%;
+}
+
+.sidebar{
+    width:180px;
+    background:#0c151f;
+    border-right:1px solid rgba(255,255,255,.08);
+    padding:12px;
+}
+
+.side-item{
+    padding:11px;
+    border-radius:7px;
+    margin-bottom:4px;
+    cursor:pointer;
+    font-size:13px;
+}
+
+.side-item:hover{
+    background:#172534;
+}
+
+.files-area{
+    flex:1;
+    padding:20px;
+}
+
+.file-toolbar{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+}
+
+.btn{
+    border:0;
+    border-radius:7px;
+    padding:9px 13px;
+    background:#17314a;
+    color:white;
+    cursor:pointer;
+}
+
+.btn:hover{
+    background:#214766;
+}
+
+.file-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,100px);
+    gap:20px;
+}
+
+.file{
+    padding:13px;
+    text-align:center;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.file:hover{
+    background:rgba(255,255,255,.07);
+}
+
+.file-icon{
+    font-size:40px;
+}
+
+/* NOTEPAD */
+
+.notepad{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+}
+
+.note-toolbar{
+    padding:9px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+#noteText{
+    flex:1;
+    resize:none;
+    background:#0a1119;
+    border:0;
+    outline:none;
+    color:#eaf5ff;
+    padding:20px;
+    font:15px Consolas,monospace;
+}
+
+/* CALCULATOR */
+
+.calculator{
+    width:330px;
+    margin:auto;
+    padding:25px;
+}
+
+.calc-display{
+    width:100%;
+    height:70px;
+    background:#071019;
+    border:1px solid #1e3b52;
+    border-radius:10px;
+    color:white;
+    text-align:right;
+    padding:15px;
+    font-size:27px;
+    margin-bottom:14px;
+}
+
+.calc-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+
+.calc-btn{
+    height:55px;
+    border:0;
+    border-radius:9px;
+    background:#172938;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+}
+
+.calc-btn:hover{
+    background:#23445c;
+}
+
+/* TERMINAL */
+
+.terminal{
+    background:#050a0e;
+    color:#d8f7df;
+    height:100%;
+    padding:15px;
+    font:14px Consolas,monospace;
+    overflow:auto;
+}
+
+.terminal-line{
+    white-space:pre-wrap;
+}
+
+#terminalInput{
+    background:transparent;
+    border:0;
+    outline:none;
+    color:#d8f7df;
+    font:14px Consolas,monospace;
+    width:80%;
+}
+
+/* BROWSER */
+
+.browser{
+    display:flex;
+    flex-direction:column;
+    height:100%;
+}
+
+.browser-toolbar{
+    padding:8px;
+    display:flex;
+    gap:7px;
+    background:#111c28;
+}
+
+.browser-url{
+    flex:1;
+    border:0;
+    outline:none;
+    border-radius:7px;
+    padding:10px;
+    background:#07111c;
+    color:white;
+}
+
+.browser-frame{
+    flex:1;
+    width:100%;
+    border:0;
+    background:white;
+}
+
+/* SETTINGS */
+
+.settings{
+    padding:25px;
+}
+
+.setting-card{
+    background:#101b27;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:14px;
+}
+
+.setting-card h3{
+    margin-top:0;
+}
+
+input[type=color]{
+    width:70px;
+    height:35px;
+}
+
+/* STORE */
+
+.store{
+    padding:25px;
+}
+
+.store-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+    gap:15px;
+}
+
+.store-card{
+    background:#101b27;
+    border:1px solid rgba(255,255,255,.08);
+    padding:20px;
+    border-radius:13px;
+}
+
+.store-icon{
+    font-size:45px;
+}
+
+/* NOTIFICATIONS */
+
+#notification{
+    position:absolute;
+    right:20px;
+    bottom:80px;
+    background:#132232;
+    border:1px solid rgba(255,255,255,.1);
+    padding:14px 18px;
+    border-radius:10px;
+    display:none;
+    z-index:999999;
+    box-shadow:0 10px 40px black;
+}
+
+/* MOBILE */
+
+@media(max-width:800px){
+    .window{
+        left:10px!important;
+        top:10px!important;
+        width:calc(100% - 20px)!important;
+        height:calc(100% - 82px)!important;
+    }
+
+    #startMenu{
+        width:calc(100% - 20px);
+        height:70%;
+    }
+
+    .desktop-icons{
+        grid-template-columns:repeat(4,80px);
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="desktop">
+
+<div class="wallpaper"></div>
+
+<div class="desktop-icons">
+
+<div class="desktop-icon" ondblclick="openApp('explorer')">
+<div class="icon-img">📁</div>
+<div class="icon-name">Dateien</div>
+</div>
+
+<div class="desktop-icon" ondblclick="openApp('browser')">
+<div class="icon-img">🌐</div>
+<div class="icon-name">Browser</div>
+</div>
+
+<div class="desktop-icon" ondblclick="openApp('terminal')">
+<div class="icon-img">⌨️</div>
+<div class="icon-name">Terminal</div>
+</div>
+
+<div class="desktop-icon" ondblclick="openApp('notepad')">
+<div class="icon-img">📝</div>
+<div class="icon-name">Editor</div>
+</div>
+
+<div class="desktop-icon" ondblclick="openApp('calculator')">
+<div class="icon-img">🧮</div>
+<div class="icon-name">Rechner</div>
+</div>
+
+<div class="desktop-icon" ondblclick="openApp('settings')">
+<div class="icon-img">⚙️</div>
+<div class="icon-name">Einstellungen</div>
+</div>
+
+</div>
+
+
+<!-- FILE EXPLORER -->
+
+<div class="window" id="explorer">
+
+<div class="titlebar">
+<div class="title">📁 Datei-Explorer</div>
+<div class="window-buttons">
+<div class="wbtn" onclick="minimize('explorer')">−</div>
+<div class="wbtn" onclick="maximize('explorer')">□</div>
+<div class="wbtn close" onclick="closeApp('explorer')">×</div>
+</div>
+</div>
+
+<div class="content">
+
+<div class="explorer">
+
+<div class="sidebar">
+
+<div class="side-item">🏠 Start</div>
+<div class="side-item">🖥️ Dieser PC</div>
+<div class="side-item">📄 Dokumente</div>
+<div class="side-item">🖼️ Bilder</div>
+<div class="side-item">🎵 Musik</div>
+<div class="side-item">⬇️ Downloads</div>
+
+</div>
+
+<div class="files-area">
+
+<div class="file-toolbar">
+
+<button class="btn" onclick="createFile()">＋ Neue Datei</button>
+
+<button class="btn" onclick="uploadFile()">⬆ Hochladen</button>
+
+<button class="btn" onclick="notify('Dateien werden im Browser gespeichert')">💾 Speichern</button>
+
+</div>
+
+<div id="fileGrid" class="file-grid"></div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+
+<!-- BROWSER -->
+
+<div class="window" id="browser">
+
+<div class="titlebar">
+<div class="title">🌐 Web Browser</div>
+<div class="window-buttons">
+<div class="wbtn" onclick="minimize('browser')">−</div>
+<div class="wbtn" onclick="maximize('browser')">□</div>
+<div class="wbtn close" onclick="closeApp('browser')">×</div>
+</div>
+</div>
+
+<div class="content">
+
+<div class="browser">
+
+<div class="browser-toolbar">
+
+<button class="btn" onclick="browserBack()">←</button>
+
+<button class="btn" onclick="browserForward()">→</button>
+
+<button class="btn" onclick="browserHome()">⌂</button>
+
+<input id="browserUrl"
+class="browser-url"
+placeholder="Webadresse oder Suchbegriff..."
+onkeydown="if(event.key==='Enter')navigate()">
+
+<button class="btn" onclick="navigate()">Los</button>
+
+<button class="btn" onclick="openExternal()">↗</button>
+
+</div>
+
+<iframe
+id="browserFrame"
+class="browser-frame"
+sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin">
+</iframe>
+
+</div>
+
+</div>
+</div>
+
+
+<!-- TERMINAL -->
+
+<div class="window" id="terminal">
+
+<div class="titlebar">
+<div class="title">⌨️ Virtual Terminal</div>
+<div class="window-buttons">
+<div class="wbtn" onclick="minimize('terminal')">−</div>
+<div class="wbtn" onclick="maximize('terminal')">□</div>
+<div class="wbtn close" onclick="closeApp('terminal')">×</div>
+</div>
+</div>
+
+<div class="content">
+
+<div class="terminal" id="terminalBox">
+
+<div class="terminal-line">Virtual PC Terminal [Version 1.0]</div>
+<div class="terminal-line">Type "help" for available commands.</div>
+<br>
+
+<div>
+<span>PC&gt; </span>
+<input id="terminalInput"
+autocomplete="off"
+onkeydown="terminalKey(event)">
+</div>
+
+</div>
+
+</div>
+</div>
+
+
+<!-- NOTEPAD -->
+
+<div class="window" id="notepad">
+
+<div class="titlebar">
+<div class="title">📝 Editor</div>
+<div class="window-buttons">
+<div class="wbtn" onclick="minimize('notepad')">−</div>
+<div class="wbtn" onclick="maximize('notepad')">□</div>
+<div class="wbtn close" onclick="closeApp('notepad')">×</div>
+</div>
+</div>
+
+<div class="content">
+
+<div class="notepad">
+
+<div class="note-toolbar">
+
+<button class="btn" onclick="saveNote()">💾 Speichern</button>
+
+<button class="btn" onclick="downloadNote()">⬇ Exportieren</button>
+
+<button class="btn" onclick="document.getElementById('noteText').value=''">Neu</button>
+
+</div>
+
+<textarea id="noteText" placeholder="Schreibe hier..."></textarea>
+
+</div>
+
+</div>
+</div>
+
+
+<!-- CALCULATOR -->
+
+<div class="window" id="calculator">
+
+<div class="titlebar">
+<div class="title">🧮 Rechner</div>
+<div class="window-buttons">
+<div class="wbtn" onclick="minimize('calculator')">−</div>
+<div class="wbtn" onclick="maximize('calculator')">□</div>
+<div class="wbtn close" onclick="closeApp('calculator')">×</div>
+</div>
+</div>
+
+<div class="content">
+
+<div class="calculator">
+
+<input id="calcDisplay" class="calc-display" readonly>
+
+<div class="calc-grid">
+
+<button class="calc-btn" onclick="calcClear()">C</button>
+<button class="calc-btn" onclick="calcAdd('(')">(</button>
+<button class="calc-btn" onclick="calcAdd(')')">)</button>
+<button class="calc-btn" onclick="calcAdd('/')">÷</button>
+
+<button class="calc-btn" onclick="calcAdd('7')">7</button>
+<button class="calc-btn" onclick="calcAdd('8')">8</button>
+<button class="calc-btn" onclick="calcAdd('9')">9</button>
+<button class="calc-btn" onclick="calcAdd('*')">×</button>
+
+<button class="calc-btn" onclick="calcAdd('4')">4</button>
+<button class="calc-btn" onclick="calcAdd('5')">5</button>
+<button class="calc-btn" onclick="calcAdd('6')">6</button>
+<button class="calc-btn" onclick="calcAdd('-')">−</button>
+
+<button class="calc-btn" onclick="calcAdd('1')">1</button>
+<button class="calc-btn" onclick="calcAdd('2')">2</button>
+<button class="calc-btn" onclick="calcAdd('3')">3</button>
+<button class="calc-btn" onclick="calcAdd('+')">+</button>
+
+<button class="calc-btn" onclick="calcAdd('0')">0</button>
+<button class="calc-btn" onclick="calcAdd('.')">.</button>
+<button class="calc-btn" onclick="calcBack()">⌫</button>
+<button class="calc-btn" onclick="calcResult()">=</button>
+
+</div>
+</div>
+
+</div>
+</div>
+
+
+<!-- SETTINGS -->
+
+<div class="window" id="settings">
+
+<div class="titlebar">
+<div class="title">⚙️ Einstellungen</div>
+<div class="window-buttons">
+<div class="wbtn" onclick="minimize('settings')">−</div>
+<div class="wbtn" onclick="maximize('settings')">□</div>
+<div class="wbtn close" onclick="closeApp('settings')">×</div>
+</div>
+</div>
+
+<div class="content">
+
+<div class="settings">
+
+<h2>Virtual PC Einstellungen</h2>
+
+<div class="setting-card">
+
+<h3>🖥️ Darstellung</h3>
+
+<p>Akzentfarbe</p>
+
+<input type="color" id="accentPicker" value="#00aaff">
+
+<button class="btn" onclick="applyAccent()">Anwenden</button>
+
+</div>
+
+<div class="setting-card">
+
+<h3>💾 Speicher</h3>
+
+<p id="storageInfo">Browser-Speicher wird verwendet.</p>
+
+<button class="btn" onclick="clearData()">Daten löschen</button>
+
+</div>
+
+<div class="setting-card">
+
+<h3>ℹ️ System</h3>
+
+<p>Virtual PC Web Edition</p>
+<p>Browser-basierte Betriebssystemumgebung</p>
+<p>Version 1.0</p>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+
+<!-- STORE -->
+
+<div class="window" id="store">
+
+<div class="titlebar">
+<div class="title">🛍️ App Center</div>
+<div class="window-buttons">
+<div class="wbtn" onclick="minimize('store')">−</div>
+<div class="wbtn" onclick="maximize('store')">□</div>
+<div class="wbtn close" onclick="closeApp('store')">×</div>
+</div>
+</div>
+
+<div class="content">
+
+<div class="store">
+
+<h2>App Center</h2>
+
+<div class="store-grid">
+
+<div class="store-card">
+<div class="store-icon">🌐</div>
+<h3>Browser</h3>
+<p>Webseiten öffnen</p>
+<button class="btn" onclick="openApp('browser')">Öffnen</button>
+</div>
+
+<div class="store-card">
+<div class="store-icon">📝</div>
+<h3>Notepad</h3>
+<p>Texte schreiben</p>
+<button class="btn" onclick="openApp('notepad')">Öffnen</button>
+</div>
+
+<div class="store-card">
+<div class="store-icon">⌨️</div>
+<h3>Terminal</h3>
+<p>Systembefehle</p>
+<button class="btn" onclick="openApp('terminal')">Öffnen</button>
+</div>
+
+<div class="store-card">
+<div class="store-icon">🧮</div>
+<h3>Calculator</h3>
+<p>Rechnen</p>
+<button class="btn" onclick="openApp('calculator')">Öffnen</button>
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+
+
+<!-- START -->
+
+<div id="startMenu">
+
+<div class="start-title">Virtual PC</div>
+
+<input
+class="start-search"
+placeholder="Apps suchen..."
+oninput="searchApps(this.value)">
+
+<div class="apps-grid">
+
+<div class="start-app" onclick="openApp('explorer')">
+<div>📁</div><span>Dateien</span>
+</div>
+
+<div class="start-app" onclick="openApp('browser')">
+<div>🌐</div><span>Browser</span>
+</div>
+
+<div class="start-app" onclick="openApp('terminal')">
+<div>⌨️</div><span>Terminal</span>
+</div>
+
+<div class="start-app" onclick="openApp('notepad')">
+<div>📝</div><span>Editor</span>
+</div>
+
+<div class="start-app" onclick="openApp('calculator')">
+<div>🧮</div><span>Rechner</span>
+</div>
+
+<div class="start-app" onclick="openApp('store')">
+<div>🛍️</div><span>App Center</span>
+</div>
+
+<div class="start-app" onclick="openApp('settings')">
+<div>⚙️</div><span>Einstellungen</span>
+</div>
+
+</div>
+
+</div>
+
+
+<!-- TASKBAR -->
+
+<div id="taskbar">
+
+<div class="start" onclick="toggleStart()">⊞</div>
+
+<div class="task-apps">
+
+<div class="task-app" onclick="openApp('explorer')">📁</div>
+<div class="task-app" onclick="openApp('browser')">🌐</div>
+<div class="task-app" onclick="openApp('terminal')">⌨️</div>
+<div class="task-app" onclick="openApp('notepad')">📝</div>
+<div class="task-app" onclick="openApp('calculator')">🧮</div>
+
+</div>
+
+<div class="system">
+
+<span class="online">● Online</span>
+<span id="clock"></span>
+<span>🔊</span>
+<span>📶</span>
+<span>🔋</span>
+
+</div>
+
+</div>
+
+
+<div id="notification"></div>
+
+
+<script>
+
+/* =========================
+   SYSTEM
+========================= */
+
+let zIndex=20;
+
+function openApp(id){
+
+    const win=document.getElementById(id);
+
+    if(!win)return;
+
+    win.style.display="block";
+    win.style.zIndex=++zIndex;
+
+    document.querySelectorAll(".window")
+    .forEach(w=>w.classList.remove("active"));
+
+    win.classList.add("active");
+
+    if(id==="terminal"){
+        setTimeout(()=>{
+            document.getElementById("terminalInput").focus();
+        },100);
+    }
+
+    document.getElementById("startMenu").style.display="none";
+}
+
+function closeApp(id){
+    document.getElementById(id).style.display="none";
+}
+
+function minimize(id){
+    document.getElementById(id).style.display="none";
+}
+
+function maximize(id){
+
+    const win=document.getElementById(id);
+
+    if(win.dataset.max==="1"){
+
+        win.style.left=win.dataset.left;
+        win.style.top=win.dataset.top;
+        win.style.width=win.dataset.width;
+        win.style.height=win.dataset.height;
+
+        win.dataset.max="0";
+
+    }else{
+
+        win.dataset.left=win.style.left;
+        win.dataset.top=win.style.top;
+        win.dataset.width=win.style.width;
+        win.dataset.height=win.style.height;
+
+        win.style.left="0";
+        win.style.top="0";
+        win.style.width="100%";
+        win.style.height="calc(100% - 62px)";
+
+        win.dataset.max="1";
+    }
+}
+
+
+/* =========================
+   DRAG WINDOWS
+========================= */
+
+document.querySelectorAll(".window").forEach(win=>{
+
+    const bar=win.querySelector(".titlebar");
+
+    let dragging=false;
+    let offsetX=0;
+    let offsetY=0;
+
+    bar.addEventListener("mousedown",e=>{
+
+        if(e.target.closest(".window-buttons"))return;
+
+        dragging=true;
+
+        offsetX=e.clientX-win.offsetLeft;
+        offsetY=e.clientY-win.offsetTop;
+
+        win.style.zIndex=++zIndex;
+
+    });
+
+    document.addEventListener("mousemove",e=>{
+
+        if(!dragging)return;
+
+        win.style.left=(e.clientX-offsetX)+"px";
+        win.style.top=(e.clientY-offsetY)+"px";
+
+    });
+
+    document.addEventListener("mouseup",()=>{
+        dragging=false;
+    });
+
+    win.addEventListener("mousedown",()=>{
+        win.style.zIndex=++zIndex;
+    });
+
+});
+
+
+/* =========================
+   START
+========================= */
+
+function toggleStart(){
+
+    const menu=document.getElementById("startMenu");
+
+    menu.style.display=
+        menu.style.display==="block"
+        ?"none"
+        :"block";
+}
+
+
+/* =========================
+   CLOCK
+========================= */
+
+function updateClock(){
+
+    const d=new Date();
+
+    document.getElementById("clock").textContent=
+        d.toLocaleTimeString("de-DE",{
+            hour:"2-digit",
+            minute:"2-digit"
+        });
+
+}
+
+setInterval(updateClock,1000);
+updateClock();
+
+
+/* =========================
+   NOTIFICATIONS
+========================= */
+
+let notificationTimer;
+
+function notify(text){
+
+    const n=document.getElementById("notification");
+
+    n.textContent=text;
+    n.style.display="block";
+
+    clearTimeout(notificationTimer);
+
+    notificationTimer=setTimeout(()=>{
+        n.style.display="none";
+    },2500);
+}
+
+
+/* =========================
+   BROWSER
+========================= */
+
+let browserHistory=[];
+let historyIndex=-1;
+
+function navigate(){
+
+    let value=document
+        .getElementById("browserUrl")
+        .value
+        .trim();
+
+    if(!value)return;
+
+    let url;
+
+    if(value.startsWith("http://") ||
+       value.startsWith("https://")){
+
+        url=value;
+
+    }else if(value.includes(".") &&
+             !value.includes(" ")){
+
+        url="https://"+value;
+
+    }else{
+
+        url=
+        "https://www.google.com/search?q="+
+        encodeURIComponent(value);
+
+    }
+
+    document.getElementById("browserFrame").src=url;
+
+    browserHistory=
+        browserHistory.slice(0,historyIndex+1);
+
+    browserHistory.push(url);
+    historyIndex++;
+
+}
+
+function browserBack(){
+
+    if(historyIndex>0){
+
+        historyIndex--;
+
+        document.getElementById("browserFrame").src=
+            browserHistory[historyIndex];
+    }
+
+}
+
+function browserForward(){
+
+    if(historyIndex<browserHistory.length-1){
+
+        historyIndex++;
+
+        document.getElementById("browserFrame").src=
+            browserHistory[historyIndex];
+    }
+
+}
+
+function browserHome(){
+
+    document.getElementById("browserUrl").value=
+        "https://www.google.com";
+
+    document.getElementById("browserFrame").src=
+        "https://www.google.com";
+
+}
+
+function openExternal(){
+
+    let url=document.getElementById("browserFrame").src;
+
+    if(url){
+        window.open(url,"_blank");
+    }
+
+}
+
+browserHome();
+
+
+/* =========================
+   NOTEPAD
+========================= */
+
+const note=document.getElementById("noteText");
+
+note.value=
+    localStorage.getItem("virtualpc_note") || "";
+
+function saveNote(){
+
+    localStorage.setItem(
+        "virtualpc_note",
+        note.value
+    );
+
+    notify("Notiz gespeichert");
+}
+
+function downloadNote(){
+
+    const blob=new Blob(
+        [note.value],
+        {type:"text/plain"}
+    );
+
+    const a=document.createElement("a");
+
+    a.href=URL.createObjectURL(blob);
+    a.download="Notiz.txt";
+    a.click();
+
+    URL.revokeObjectURL(a.href);
+
+}
+
+
+/* =========================
+   CALCULATOR
+========================= */
+
+function calcAdd(value){
+
+    document.getElementById("calcDisplay").value+=value;
+
+}
+
+function calcClear(){
+
+    document.getElementById("calcDisplay").value="";
+
+}
+
+function calcBack(){
+
+    const d=document.getElementById("calcDisplay");
+
+    d.value=d.value.slice(0,-1);
+
+}
+
+function calcResult(){
+
+    const d=document.getElementById("calcDisplay");
+
+    try{
+
+        if(!/^[0-9+\-*/().\s]+$/.test(d.value)){
+            throw new Error();
+        }
+
+        d.value=Function(
+            '"use strict";return ('+d.value+')'
+        )();
+
+    }catch{
+
+        d.value="Fehler";
+
+    }
+
+}
+
+
+/* =========================
+   TERMINAL
+========================= */
+
+function terminalKey(e){
+
+    if(e.key!=="Enter")return;
+
+    const input=document.getElementById("terminalInput");
+
+    const command=input.value.trim();
+
+    const box=document.getElementById("terminalBox");
+
+    const line=document.createElement("div");
+
+    line.className="terminal-line";
+
+    line.textContent="PC> "+command;
+
+    box.insertBefore(
+        line,
+        input.parentElement
+    );
+
+    let output="";
+
+    const parts=command.split(" ");
+    const cmd=parts[0].toLowerCase();
+
+    switch(cmd){
+
+        case "help":
+
+            output=
+`Available commands:
+
+help       Show commands
+clear      Clear terminal
+date       Show date
+time       Show time
+whoami     Current user
+system     System information
+apps       Installed apps
+open       Open application
+echo       Print text
+storage    Browser storage
+about      About Virtual PC`;
+
+            break;
+
+        case "clear":
+
+            document
+            .querySelectorAll(".terminal-line")
+            .forEach(x=>x.remove());
+
+            input.value="";
+            return;
+
+        case "date":
+
+            output=
+            new Date().toLocaleDateString("de-DE");
+
+            break;
+
+        case "time":
+
+            output=
+            new Date().toLocaleTimeString("de-DE");
+
+            break;
+
+        case "whoami":
+
+            output="virtual-user";
+
+            break;
+
+        case "system":
+
+            output=
+`Virtual PC Web Edition
+Browser OS
+Architecture: WebAssembly/JavaScript
+Storage: Local Browser Storage
+Network: Browser`;
+
+            break;
+
+        case "apps":
+
+            output=
+`Files
+Browser
+Terminal
+Notepad
+Calculator
+Settings
+App Center`;
+
+            break;
+
+        case "open":
+
+            if(parts[1]){
+
+                const names={
+                    browser:"browser",
+                    files:"explorer",
+                    explorer:"explorer",
+                    terminal:"terminal",
+                    notepad:"notepad",
+                    editor:"notepad",
+                    calculator:"calculator",
+                    calc:"calculator",
+                    settings:"settings",
+                    store:"store"
+                };
+
+                if(names[parts[1].toLowerCase()]){
+
+                    openApp(
+                        names[
+                            parts[1].toLowerCase()
+                        ]
+                    );
+
+                    output=
+                    "Application gestartet.";
+
+                }else{
+
+                    output="App nicht gefunden.";
+
+                }
+
+            }else{
+
+                output="Usage: open browser";
+
+            }
+
+            break;
+
+        case "echo":
+
+            output=
+            parts.slice(1).join(" ");
+
+            break;
+
+        case "storage":
+
+            output=
+            "localStorage verfügbar: "+
+            (typeof localStorage!=="undefined");
+
+            break;
+
+        case "about":
+
+            output=
+            "Virtual PC Web Edition 1.0";
+
+            break;
+
+        case "":
+
+            output="";
+
+            break;
+
+        default:
+
+            output=
+            `"${cmd}" wurde nicht gefunden. Tippe "help".`;
+
+    }
+
+    if(output){
+
+        const out=document.createElement("div");
+
+        out.className="terminal-line";
+
+        out.textContent=output;
+
+        box.insertBefore(
+            out,
+            input.parentElement
+        );
+
+    }
+
+    input.value="";
+
+    box.scrollTop=box.scrollHeight;
+
+}
+
+
+/* =========================
+   FILE SYSTEM
+========================= */
+
+let virtualFiles=
+    JSON.parse(
+        localStorage.getItem("virtualpc_files") ||
+        "null"
+    );
+
+if(!virtualFiles){
+
+    virtualFiles=[
+        {
+            name:"Willkommen.txt",
+            type:"text",
+            content:"Willkommen bei deinem Virtual PC!"
+        },
+        {
+            name:"Dokumente",
+            type:"folder"
+        },
+        {
+            name:"Bilder",
+            type:"folder"
+        },
+        {
+            name:"Downloads",
+            type:"folder"
+        }
+    ];
+
+}
+
+function saveFiles(){
+
+    localStorage.setItem(
+        "virtualpc_files",
+        JSON.stringify(virtualFiles)
+    );
+
+}
+
+function renderFiles(){
+
+    const grid=document.getElementById("fileGrid");
+
+    grid.innerHTML="";
+
+    virtualFiles.forEach((file,index)=>{
+
+        const div=document.createElement("div");
+
+        div.className="file";
+
+        div.innerHTML=`
+
+            <div class="file-icon">
+                ${file.type==="folder"?"📁":"📄"}
+            </div>
+
+            <div>${escapeHtml(file.name)}</div>
+
+        `;
+
+        div.ondblclick=()=>{
+
+            if(file.type==="text"){
+
+                openApp("notepad");
+
+                document.getElementById(
+                    "noteText"
+                ).value=file.content || "";
+
+            }
+
+        };
+
+        grid.appendChild(div);
+
+    });
+
+}
+
+function escapeHtml(str){
+
+    return str
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+
+}
+
+function createFile(){
+
+    const name=prompt(
+        "Dateiname:",
+        "Neue Datei.txt"
+    );
+
+    if(!name)return;
+
+    virtualFiles.push({
+        name:name,
+        type:"text",
+        content:""
+    });
+
+    saveFiles();
+    renderFiles();
+
+    notify("Datei erstellt");
+
+}
+
+function uploadFile(){
+
+    const input=document.createElement("input");
+
+    input.type="file";
+
+    input.onchange=async()=>{
+
+        const file=input.files[0];
+
+        if(!file)return;
+
+        const text=
+            await file.text();
+
+        virtualFiles.push({
+            name:file.name,
+            type:"text",
+            content:text
+        });
+
+        saveFiles();
+        renderFiles();
+
+        notify(
+            file.name+
+            " importiert"
+        );
+
+    };
+
+    input.click();
+
+}
+
+renderFiles();
+
+
+/* =========================
+   SETTINGS
+========================= */
+
+function applyAccent(){
+
+    const color=
+        document.getElementById(
+            "accentPicker"
+        ).value;
+
+    document.documentElement
+        .style.setProperty(
+            "--accent",
+            color
+        );
+
+    localStorage.setItem(
+        "virtualpc_accent",
+        color
+    );
+
+    notify("Akzentfarbe geändert");
+
+}
+
+const savedAccent=
+    localStorage.getItem(
+        "virtualpc_accent"
+    );
+
+if(savedAccent){
+
+    document.getElementById(
+        "accentPicker"
+    ).value=savedAccent;
+
+}
+
+
+/* =========================
+   DATA
+========================= */
+
+function clearData(){
+
+    if(confirm(
+        "Alle Virtual-PC-Daten löschen?"
+    )){
+
+        localStorage.clear();
+
+        location.reload();
+
+    }
+
+}
+
+
+/* =========================
+   APP SEARCH
+========================= */
+
+function searchApps(value){
+
+    value=value.toLowerCase();
+
+    document
+    .querySelectorAll(".start-app")
+    .forEach(app=>{
+
+        app.style.display=
+            app.textContent
+            .toLowerCase()
+            .includes(value)
+            ?"block"
+            :"none";
+
+    });
+
+}
+
+
+/* =========================
+   KEYBOARD SHORTCUTS
+========================= */
+
+document.addEventListener("keydown",e=>{
+
+    if(e.key==="Escape"){
+
+        document.getElementById(
+            "startMenu"
+        ).style.display="none";
+
+    }
+
+    if(e.ctrlKey && e.altKey && e.key==="t"){
+
+        e.preventDefault();
+
+        openApp("terminal");
+
+    }
+
+    if(e.ctrlKey && e.altKey && e.key==="e"){
+
+        e.preventDefault();
+
+        openApp("explorer");
+
+    }
+
+});
+
+
+/* =========================
+   DOUBLE CLICK DESKTOP
+========================= */
+
+document.getElementById("desktop")
+.addEventListener("dblclick",e=>{
+
+    if(
+        e.target===document.getElementById("desktop") ||
+        e.target.classList.contains("wallpaper")
+    ){
+
+        document.getElementById(
+            "startMenu"
+        ).style.display="none";
+
+    }
+
+});
+
+
+notify("Virtual PC gestartet");
+
+</script>
+
+</body>
+</html>
