@@ -1,689 +1,1016 @@
-```html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VOS — Virtual Operating System</title>
 
 <style>
-:root{
- --accent:#36a9ff;
- --bg:#050b12;
- --panel:rgba(12,20,31,.94);
- --panel2:rgba(20,31,45,.96);
- --line:rgba(255,255,255,.11);
- --text:#f5f8fc;
-}
-
 *{box-sizing:border-box}
+
 html,body{
- margin:0;
- width:100%;
- height:100%;
- overflow:hidden;
- font-family:Segoe UI,Arial,sans-serif;
- color:var(--text);
- background:#050b12;
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    background:#071018;
+    color:#eef7ff;
 }
 
-button,input,textarea{font:inherit}
+button,input,textarea,select{
+    font:inherit;
+}
+
+button{
+    border:0;
+    color:inherit;
+    cursor:pointer;
+}
+
+body{
+    user-select:none;
+}
+
+/* DESKTOP */
 
 #desktop{
- position:fixed;
- inset:0 0 64px;
- overflow:hidden;
- background:
- radial-gradient(circle at 50% 35%,#16446b 0%,transparent 32%),
- radial-gradient(circle at 85% 80%,#152d50 0%,transparent 28%),
- linear-gradient(135deg,#050a11,#081525,#04080e);
+    position:fixed;
+    inset:0;
+    background:
+        radial-gradient(circle at 70% 20%,#17415b 0,#0b1b29 34%,#050a10 75%);
+    overflow:hidden;
 }
 
-#desktop::after{
- content:"";
- position:absolute;
- width:700px;
- height:700px;
- left:50%;
- top:45%;
- transform:translate(-50%,-50%);
- border:1px solid #36a9ff17;
- border-radius:50%;
- box-shadow:0 0 150px #36a9ff12,inset 0 0 100px #36a9ff08;
- pointer-events:none;
+#desktop:before{
+    content:"";
+    position:absolute;
+    inset:-20%;
+    background:
+        linear-gradient(
+            120deg,
+            transparent 35%,
+            rgba(69,255,154,.06) 50%,
+            transparent 65%
+        );
+    animation:shine 12s linear infinite;
+    pointer-events:none;
+}
+
+@keyframes shine{
+    to{
+        transform:translateX(25%);
+    }
+}
+
+#desktop:after{
+    content:"";
+    position:absolute;
+    width:420px;
+    height:420px;
+    border-radius:50%;
+    background:rgba(69,255,154,.07);
+    filter:blur(70px);
+    right:4%;
+    top:8%;
+    pointer-events:none;
 }
 
 /* DESKTOP ICONS */
 
-.desktop-icons{
- position:absolute;
- top:20px;
- left:18px;
- width:420px;
- display:grid;
- grid-template-columns:repeat(4,82px);
- gap:12px;
- z-index:2;
+#icons{
+    position:absolute;
+    top:20px;
+    left:20px;
+    display:grid;
+    grid-template-columns:repeat(2,88px);
+    gap:12px;
+    z-index:2;
 }
 
-.desktop-icon{
- width:78px;
- padding:8px 4px;
- text-align:center;
- border-radius:10px;
- cursor:pointer;
- transition:.15s;
+.deskIcon{
+    width:88px;
+    padding:8px;
+    border-radius:12px;
+    text-align:center;
+    background:transparent;
+    color:#fff;
 }
 
-.desktop-icon:hover{background:#ffffff12}
-.desktop-icon:active{transform:scale(.94)}
-
-.desktop-icon .emoji{
- font-size:36px;
- text-shadow:0 4px 15px #000;
+.deskIcon:hover{
+    background:rgba(255,255,255,.09);
 }
 
-.desktop-icon span{
- display:block;
- margin-top:5px;
- font-size:11px;
- text-shadow:0 2px 5px #000;
+.deskIcon .ico{
+    font-size:35px;
+    display:block;
+    margin-bottom:5px;
+}
+
+.deskIcon span{
+    font-size:12px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    display:block;
+}
+
+/* CLOCK */
+
+#clockTop{
+    position:absolute;
+    right:22px;
+    top:18px;
+    text-align:right;
+    z-index:2;
+}
+
+.bigTime{
+    font-size:25px;
+    font-weight:700;
+}
+
+.smallDate{
+    font-size:12px;
+    color:#9bb0bf;
 }
 
 /* TASKBAR */
 
 #taskbar{
- position:fixed;
- left:0;
- right:0;
- bottom:0;
- height:64px;
- display:flex;
- align-items:center;
- background:rgba(5,10,17,.88);
- backdrop-filter:blur(25px);
- border-top:1px solid var(--line);
- z-index:999999;
+    position:absolute;
+    left:10px;
+    right:10px;
+    bottom:10px;
+    height:62px;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:19px;
+    background:rgba(9,16,24,.76);
+    backdrop-filter:blur(22px);
+    display:flex;
+    align-items:center;
+    padding:7px;
+    gap:7px;
+    z-index:9999;
+    box-shadow:0 15px 40px rgba(0,0,0,.4);
 }
 
-.startButton{
- width:64px;
- height:64px;
- display:flex;
- align-items:center;
- justify-content:center;
- font-size:30px;
- cursor:pointer;
+.tb{
+    height:48px;
+    min-width:48px;
+    border-radius:14px;
+    background:rgba(255,255,255,.06);
+    display:grid;
+    place-items:center;
+    font-size:22px;
 }
 
-.startButton:hover{background:#ffffff0d}
+.tb:hover{
+    background:rgba(255,255,255,.13);
+}
+
+#startBtn{
+    background:#45ff9a;
+    color:#06130d;
+    font-weight:900;
+    font-size:25px;
+}
 
 .taskApps{
- display:flex;
- gap:3px;
+    display:flex;
+    gap:6px;
+    flex:1;
 }
 
-.taskApp{
- width:50px;
- height:50px;
- display:flex;
- align-items:center;
- justify-content:center;
- font-size:24px;
- border-radius:9px;
- cursor:pointer;
+.taskClock{
+    min-width:100px;
+    text-align:center;
+    font-size:12px;
+    color:#cfe0ea;
 }
 
-.taskApp:hover{background:#ffffff0d}
-
-.systemTray{
- margin-left:auto;
- display:flex;
- gap:15px;
- align-items:center;
- padding-right:18px;
- font-size:13px;
+.taskUser{
+    padding:0 12px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:13px;
 }
 
-.online{color:#55ffa2}
+.avatar{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    font-weight:800;
+    color:#071018;
+}
 
 /* START MENU */
 
 #startMenu{
- position:fixed;
- left:10px;
- bottom:74px;
- width:520px;
- height:620px;
- background:rgba(9,16,25,.97);
- backdrop-filter:blur(30px);
- border:1px solid var(--line);
- border-radius:18px;
- box-shadow:0 30px 100px #000b;
- z-index:1000000;
- display:none;
- padding:22px;
+    position:absolute;
+    left:12px;
+    bottom:82px;
+    width:410px;
+    max-height:620px;
+    overflow:auto;
+    border:1px solid rgba(255,255,255,.13);
+    border-radius:22px;
+    background:rgba(8,15,23,.94);
+    backdrop-filter:blur(25px);
+    box-shadow:0 30px 80px rgba(0,0,0,.55);
+    padding:18px;
+    z-index:9998;
+    display:none;
 }
 
-.startHeader{
- display:flex;
- align-items:center;
- gap:12px;
- margin-bottom:15px;
+#startMenu.show{
+    display:block;
+    animation:pop .16s ease;
 }
 
-.avatar{
- width:43px;
- height:43px;
- border-radius:50%;
- background:linear-gradient(135deg,var(--accent),#7a5cff);
- display:flex;
- align-items:center;
- justify-content:center;
- font-size:22px;
+@keyframes pop{
+    from{
+        opacity:0;
+        transform:translateY(10px) scale(.98);
+    }
+    to{
+        opacity:1;
+        transform:none;
+    }
 }
 
-.startHeader strong{font-size:17px}
-.startHeader small{display:block;color:#8da0b5}
-
-.startSearch{
- width:100%;
- height:43px;
- border:1px solid var(--line);
- border-radius:9px;
- background:#111d2a;
- color:white;
- padding:0 14px;
- outline:none;
- margin-bottom:18px;
+.profile{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    border-radius:14px;
+    background:rgba(255,255,255,.05);
 }
 
-.sectionTitle{
- color:#8ea2b8;
- font-size:12px;
- text-transform:uppercase;
- margin:10px 0;
+.profile b{
+    display:block;
 }
 
-.appsGrid{
- display:grid;
- grid-template-columns:repeat(5,1fr);
- gap:5px;
+.muted{
+    color:#93a7b5;
+    font-size:12px;
 }
 
-.appTile{
- padding:12px 5px;
- text-align:center;
- border-radius:9px;
- cursor:pointer;
+.search{
+    width:100%;
+    padding:12px 14px;
+    border-radius:12px;
+    background:#101c27;
+    border:1px solid #263745;
+    color:#fff;
+    outline:none;
+    margin:12px 0;
 }
 
-.appTile:hover{background:#ffffff0d}
-
-.appTile .emoji{font-size:28px}
-.appTile span{display:block;font-size:10px;margin-top:5px}
-
-.startBottom{
- position:absolute;
- left:22px;
- right:22px;
- bottom:18px;
- display:flex;
- justify-content:space-between;
- border-top:1px solid var(--line);
- padding-top:13px;
+.appGrid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:7px;
 }
 
-.smallButton{
- border:0;
- background:#ffffff0a;
- color:white;
- padding:8px 12px;
- border-radius:7px;
- cursor:pointer;
+.appBtn{
+    padding:10px 5px;
+    border-radius:13px;
+    background:rgba(255,255,255,.045);
+    text-align:center;
+    min-height:76px;
 }
 
-.smallButton:hover{background:#ffffff15}
+.appBtn:hover{
+    background:rgba(69,255,154,.11);
+}
+
+.appBtn .aico{
+    font-size:27px;
+    display:block;
+}
+
+.appBtn small{
+    font-size:10px;
+}
+
+.menuRow{
+    display:flex;
+    gap:7px;
+    margin-top:10px;
+}
+
+.menuRow button{
+    flex:1;
+    padding:10px;
+    border-radius:12px;
+    background:#15232f;
+}
+
+.green{
+    background:#45ff9a !important;
+    color:#06130d !important;
+    font-weight:800;
+}
 
 /* WINDOWS */
 
 .window{
- position:absolute;
- left:160px;
- top:90px;
- width:820px;
- height:560px;
- min-width:350px;
- min-height:250px;
- display:none;
- background:var(--panel);
- border:1px solid var(--line);
- border-radius:13px;
- overflow:hidden;
- box-shadow:0 30px 100px #000a;
- z-index:10;
+    position:absolute;
+    left:13%;
+    top:9%;
+    width:74%;
+    height:76%;
+    min-width:340px;
+    min-height:240px;
+    background:#0c151e;
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:18px;
+    box-shadow:0 35px 90px rgba(0,0,0,.58);
+    overflow:hidden;
+    z-index:100;
+    display:none;
+    resize:both;
+}
+
+.window.open{
+    display:block;
+    animation:win .15s ease;
+}
+
+@keyframes win{
+    from{
+        opacity:0;
+        transform:scale(.97);
+    }
+    to{
+        opacity:1;
+        transform:none;
+    }
 }
 
 .titlebar{
- height:44px;
- display:flex;
- align-items:center;
- background:#101a27;
- border-bottom:1px solid var(--line);
- cursor:grab;
+    height:46px;
+    display:flex;
+    align-items:center;
+    padding:0 10px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    background:#0e1923;
+    cursor:grab;
 }
 
-.title{
- flex:1;
- padding-left:15px;
- font-size:13px;
+.titlebar:active{
+    cursor:grabbing;
 }
 
-.winBtns{display:flex;height:100%}
-.winBtn{
- width:44px;
- display:flex;
- align-items:center;
- justify-content:center;
- cursor:pointer;
+.titleText{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    flex:1;
+    font-weight:700;
+    font-size:13px;
 }
 
-.winBtn:hover{background:#ffffff0b}
-.winBtn.close:hover{background:#d83d4b}
+.winBtns{
+    display:flex;
+    gap:5px;
+}
+
+.winBtns button{
+    width:31px;
+    height:28px;
+    border-radius:8px;
+    background:rgba(255,255,255,.06);
+}
+
+.winBtns button:hover{
+    background:rgba(255,255,255,.13);
+}
+
+.winBtns .x:hover{
+    background:#d34d61;
+}
 
 .content{
- height:calc(100% - 44px);
- overflow:auto;
+    height:calc(100% - 46px);
+    overflow:auto;
+    background:#0a131c;
 }
 
-/* GENERAL */
+.pad{
+    padding:18px;
+}
 
 .toolbar{
- display:flex;
- gap:8px;
- padding:10px;
- border-bottom:1px solid var(--line);
+    display:flex;
+    gap:7px;
+    align-items:center;
+    padding:10px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    background:#0d1822;
+}
+
+.toolbar input,
+.toolbar select,
+.input{
+    background:#101e2a;
+    border:1px solid #263a49;
+    color:#fff;
+    border-radius:9px;
+    padding:9px 11px;
+    outline:none;
+}
+
+.toolbar input{
+    flex:1;
 }
 
 .btn{
- border:1px solid var(--line);
- background:#14283a;
- color:white;
- padding:8px 12px;
- border-radius:7px;
- cursor:pointer;
+    padding:9px 12px;
+    border-radius:9px;
+    background:#172733;
+    border:1px solid #29404f;
 }
 
-.btn:hover{background:#1e405d}
+.btn:hover{
+    background:#203442;
+}
+
+.grid2{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+}
+
+.grid3{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+}
 
 .card{
- background:#101c29;
- border:1px solid var(--line);
- border-radius:12px;
- padding:18px;
+    background:#101c27;
+    border:1px solid #223441;
+    border-radius:14px;
+    padding:14px;
 }
-
-/* FILES */
-
-.explorer{
- display:flex;
- height:100%;
-}
-
-.sidebar{
- width:175px;
- background:#0a141f;
- border-right:1px solid var(--line);
- padding:12px;
-}
-
-.side{
- padding:10px;
- border-radius:7px;
- cursor:pointer;
- font-size:13px;
-}
-
-.side:hover{background:#ffffff09}
-
-.fileArea{
- flex:1;
- padding:20px;
-}
-
-.fileGrid{
- display:grid;
- grid-template-columns:repeat(auto-fill,100px);
- gap:18px;
-}
-
-.file{
- padding:10px;
- text-align:center;
- border-radius:9px;
- cursor:pointer;
-}
-
-.file:hover{background:#ffffff08}
-.fileIcon{font-size:38px}
 
 /* BROWSER */
 
-.browser{
- height:100%;
- display:flex;
- flex-direction:column;
+.browserHome{
+    height:100%;
+    display:grid;
+    place-items:center;
+    background:
+        radial-gradient(circle at 50% 25%,#123b3a,#08121b 60%);
 }
 
-.browserBar{
- display:flex;
- gap:7px;
- padding:8px;
- background:#101a27;
+.browserHero{
+    text-align:center;
+    width:min(680px,90%);
 }
 
-.browserBar input{
- flex:1;
- background:#07111b;
- color:white;
- border:1px solid var(--line);
- border-radius:7px;
- padding:9px;
- outline:none;
+.browserLogo{
+    font-size:70px;
+}
+
+.browserHero h1{
+    font-size:38px;
+    margin:5px;
+}
+
+.browserHero p{
+    color:#8fa4b3;
+}
+
+.browserSearch{
+    display:flex;
+    gap:8px;
+    margin-top:20px;
+}
+
+.browserSearch input{
+    flex:1;
+    padding:14px 16px;
+    border-radius:13px;
+    border:1px solid #2a414e;
+    background:#0d1b26;
+    color:white;
+    outline:none;
+}
+
+.browserSearch button{
+    padding:0 20px;
+    border-radius:13px;
+    background:#45ff9a;
+    color:#06130d;
+    font-weight:800;
+}
+
+.quick{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:15px;
+}
+
+.quick button{
+    background:#132531;
+    padding:9px 12px;
+    border-radius:10px;
 }
 
 .browserFrame{
- flex:1;
- width:100%;
- border:0;
- background:white;
+    width:100%;
+    height:100%;
+    border:0;
+    background:#fff;
 }
 
-/* CHAT */
-
-.chat{
- display:flex;
- flex-direction:column;
- height:100%;
+.blocked{
+    position:absolute;
+    inset:46px 0 0;
+    display:none;
+    place-items:center;
+    background:#0b141d;
+    color:white;
+    text-align:center;
+    padding:25px;
 }
 
-.chatMessages{
- flex:1;
- overflow:auto;
- padding:18px;
+.blocked.show{
+    display:grid;
 }
 
-.message{
- max-width:75%;
- padding:11px 14px;
- margin:8px 0;
- border-radius:12px;
- background:#132638;
- line-height:1.4;
+/* NOTES */
+
+.noteArea{
+    width:100%;
+    height:100%;
+    min-height:300px;
+    background:#0b141d;
+    color:#eaf5fb;
+    border:0;
+    outline:0;
+    padding:18px;
+    font-size:15px;
+    resize:none;
 }
 
-.message.me{
- margin-left:auto;
- background:var(--accent);
- color:#03101a;
+/* CALCULATOR */
+
+.calc{
+    max-width:380px;
+    margin:auto;
 }
 
-.chatInput{
- display:flex;
- padding:10px;
- border-top:1px solid var(--line);
- gap:7px;
+.calcDisplay{
+    font-size:32px;
+    text-align:right;
+    padding:18px;
+    background:#071019;
+    border-radius:14px;
+    margin-bottom:10px;
+    min-height:70px;
+    overflow:auto;
 }
 
-.chatInput input{
- flex:1;
- background:#07111b;
- color:white;
- border:1px solid var(--line);
- border-radius:8px;
- padding:10px;
- outline:none;
+.calcKeys{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:7px;
+}
+
+.calcKeys button{
+    height:60px;
+    border-radius:13px;
+    background:#162632;
+    font-size:18px;
+}
+
+.calcKeys button:hover{
+    background:#223947;
+}
+
+.calcKeys .op{
+    background:#184331;
+    color:#8dffc0;
 }
 
 /* TERMINAL */
 
 .terminal{
- background:#03070a;
- color:#b9ffce;
- height:100%;
- padding:15px;
- font:14px Consolas,monospace;
- overflow:auto;
+    font-family:ui-monospace,Consolas,monospace;
+    height:100%;
+    padding:14px;
+    overflow:auto;
+    color:#c9ffd9;
+    background:#050a0d;
 }
 
-.termLine{white-space:pre-wrap;margin:3px 0}
+.termLine{
+    white-space:pre-wrap;
+}
 
 .termInput{
- background:transparent;
- border:0;
- outline:none;
- color:#b9ffce;
- width:80%;
- font:inherit;
+    display:flex;
 }
 
-/* NOTES */
-
-.notes{
- display:flex;
- flex-direction:column;
- height:100%;
+.termInput span{
+    color:#45ff9a;
 }
 
-.notes textarea{
- flex:1;
- resize:none;
- border:0;
- outline:none;
- background:#080f17;
- color:#f5f8fc;
- padding:20px;
- font:15px Consolas,monospace;
+.termInput input{
+    flex:1;
+    background:none;
+    border:0;
+    outline:0;
+    color:white;
+    font:inherit;
 }
 
-/* CALCULATOR */
+/* FILES */
 
-.calculator{
- max-width:340px;
- margin:30px auto;
+.fileGrid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(115px,1fr));
+    gap:10px;
 }
 
-.calcDisplay{
- width:100%;
- height:70px;
- background:#050b11;
- color:white;
- border:1px solid var(--line);
- border-radius:10px;
- text-align:right;
- padding:12px;
- font-size:28px;
- margin-bottom:10px;
+.fileItem{
+    padding:15px;
+    border-radius:13px;
+    background:#101d28;
+    border:1px solid #203442;
+    text-align:center;
 }
 
-.calcGrid{
- display:grid;
- grid-template-columns:repeat(4,1fr);
- gap:7px;
+.fileItem:hover{
+    border-color:#45ff9a;
 }
 
-.calcGrid button{
- height:55px;
- background:#142536;
- border:0;
- color:white;
- border-radius:8px;
- font-size:17px;
- cursor:pointer;
+.fileItem .ficon{
+    font-size:35px;
 }
 
-.calcGrid button:hover{background:#225070}
+/* TODO */
 
-/* STORE */
-
-.store{
- padding:22px;
+.todo{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
 }
 
-.storeGrid{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
- gap:14px;
+.todo input{
+    flex:1;
 }
 
-.storeCard{
- background:#101c29;
- border:1px solid var(--line);
- padding:18px;
- border-radius:13px;
+.todoItem{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:11px;
+    border-bottom:1px solid #20303c;
 }
 
-.storeIcon{font-size:45px}
+.todoItem.done span{
+    text-decoration:line-through;
+    color:#71838f;
+}
+
+.todoItem span{
+    flex:1;
+}
+
+.todoItem button{
+    background:#182832;
+    border-radius:8px;
+    padding:5px 8px;
+}
 
 /* GAMES */
 
-.game{
- height:100%;
- display:flex;
- flex-direction:column;
-}
-
-.gameInfo{
- padding:10px 15px;
- background:#0c1723;
- display:flex;
- justify-content:space-between;
+.gameWrap{
+    height:100%;
+    display:grid;
+    place-items:center;
+    padding:15px;
 }
 
 .gameCanvas{
- flex:1;
- position:relative;
- overflow:hidden;
- background:#07121d;
+    background:#05090d;
+    border:1px solid #28404d;
+    border-radius:12px;
+    max-width:100%;
+    max-height:100%;
 }
 
-#snakeCanvas{
- width:100%;
- height:100%;
+.score{
+    font-size:18px;
+    font-weight:700;
+    text-align:center;
+    margin-bottom:8px;
 }
 
-.gameControls{
- display:flex;
- justify-content:center;
- gap:7px;
- padding:9px;
- background:#0c1723;
+.ttt{
+    width:min(390px,90%);
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
 }
 
-.gameControls button{
- width:50px;
- height:40px;
- border:0;
- border-radius:7px;
- background:#17334a;
- color:white;
- cursor:pointer;
+.ttt button{
+    aspect-ratio:1;
+    border-radius:15px;
+    background:#12202b;
+    font-size:48px;
+}
+
+.ttt button:hover{
+    background:#1b3443;
+}
+
+.mine{
+    display:grid;
+    grid-template-columns:repeat(10,30px);
+    gap:3px;
+}
+
+.mine button{
+    width:30px;
+    height:30px;
+    background:#182833;
+    border-radius:4px;
+    font-size:12px;
+}
+
+.mine button.open{
+    background:#29414e;
+}
+
+.mine button.flag{
+    color:#45ff9a;
+}
+
+.g2048{
+    display:grid;
+    grid-template-columns:repeat(4,72px);
+    gap:8px;
+    padding:10px;
+    background:#16232d;
+    border-radius:12px;
+}
+
+.g2048 div{
+    width:72px;
+    height:72px;
+    border-radius:8px;
+    background:#0d171f;
+    display:grid;
+    place-items:center;
+    font-size:22px;
+    font-weight:800;
+}
+
+.clicker{
+    text-align:center;
+}
+
+.clickCoin{
+    width:190px;
+    height:190px;
+    border-radius:50%;
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #79ffb5,
+            #19b96d 60%,
+            #087342
+        );
+    color:#052314;
+    font-size:65px;
+    box-shadow:0 18px 45px rgba(69,255,154,.2);
+    margin:30px;
+}
+
+.clickCoin:active{
+    transform:scale(.96);
 }
 
 /* PAINT */
 
 .paint{
- height:100%;
- display:flex;
- flex-direction:column;
+    display:grid;
+    grid-template-columns:50px 1fr;
+    height:100%;
 }
 
-#paintCanvas{
- flex:1;
- background:white;
- cursor:crosshair;
+.paintTools{
+    padding:8px;
+    background:#101b25;
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+.paintTools button{
+    padding:8px;
+    border-radius:8px;
+    background:#182a36;
+}
+
+.paintTools input{
+    width:34px;
+}
+
+.paintCanvas{
+    background:white;
+    touch-action:none;
+    cursor:crosshair;
+}
+
+/* STORE */
+
+.storeGrid{
+    display:grid;
+    grid-template-columns:
+        repeat(auto-fill,minmax(190px,1fr));
+    gap:12px;
+}
+
+.storeCard{
+    background:#101d28;
+    border:1px solid #223845;
+    border-radius:14px;
+    padding:14px;
+}
+
+.storeCard .storeIcon{
+    font-size:42px;
+}
+
+.storeCard button{
+    margin-top:10px;
+    width:100%;
+}
+
+/* CALENDAR */
+
+.calendar{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:5px;
+}
+
+.day,.dow{
+    padding:9px;
+    text-align:center;
+    border-radius:8px;
+}
+
+.dow{
+    color:#45ff9a;
+    font-weight:800;
+}
+
+.day{
+    background:#101d28;
+}
+
+.day.today{
+    outline:2px solid #45ff9a;
+}
+
+.empty{
+    opacity:.15;
 }
 
 /* USERS */
 
-.users{
- padding:22px;
+.userList{
+    display:grid;
+    gap:8px;
 }
 
-.userGrid{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
- gap:15px;
+.userRow{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:11px;
+    background:#101d28;
+    border-radius:12px;
 }
 
-.userCard{
- background:#101c29;
- border:1px solid var(--line);
- border-radius:13px;
- padding:20px;
- text-align:center;
+.userRow span{
+    flex:1;
 }
 
-.userAvatar{
- width:70px;
- height:70px;
- border-radius:50%;
- margin:auto;
- display:flex;
- align-items:center;
- justify-content:center;
- font-size:34px;
- background:linear-gradient(135deg,var(--accent),#8b5cff);
+.userRow button{
+    padding:7px 10px;
+    border-radius:8px;
+    background:#1b2c38;
 }
 
-.userCard button{
- margin-top:12px;
+/* SYSTEM */
+
+.sysgrid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
 }
 
-/* SETTINGS */
-
-.settings{
- padding:22px;
+.stat{
+    padding:13px;
+    background:#101d28;
+    border-radius:12px;
 }
 
-.setting{
- margin-bottom:14px;
- padding:18px;
- background:#101c29;
- border:1px solid var(--line);
- border-radius:12px;
+.stat b{
+    display:block;
+    margin-bottom:4px;
 }
 
-/* NOTIFICATION */
+/* MUSIC */
 
-#notification{
- position:fixed;
- right:20px;
- bottom:82px;
- background:#132536;
- border:1px solid var(--line);
- padding:13px 17px;
- border-radius:9px;
- display:none;
- z-index:9999999;
- box-shadow:0 15px 50px #0009;
+.music{
+    display:grid;
+    place-items:center;
+    height:100%;
+    text-align:center;
+}
+
+.cover{
+    width:190px;
+    height:190px;
+    border-radius:20px;
+    display:grid;
+    place-items:center;
+    background:
+        linear-gradient(135deg,#45ff9a,#164e40);
+    font-size:75px;
+    margin-bottom:18px;
 }
 
 /* MOBILE */
 
-@media(max-width:850px){
- .window{
-  left:8px!important;
-  top:8px!important;
-  width:calc(100% - 16px)!important;
-  height:calc(100% - 80px)!important;
- }
- #startMenu{
-  width:calc(100% - 20px);
-  height:75%;
- }
- .appsGrid{grid-template-columns:repeat(4,1fr)}
- .desktop-icons{grid-template-columns:repeat(4,75px);width:330px}
+@media(max-width:700px){
+
+    #icons{
+        grid-template-columns:repeat(4,72px);
+    }
+
+    .deskIcon{
+        width:72px;
+    }
+
+    .window{
+        left:2%;
+        top:3%;
+        width:96%;
+        height:84%;
+    }
+
+    #startMenu{
+        width:94%;
+    }
+
+    .taskClock{
+        display:none;
+    }
+
+    .appGrid{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .grid3,
+    .grid2,
+    .sysgrid{
+        grid-template-columns:1fr;
+    }
+
+    .mine{
+        grid-template-columns:repeat(10,26px);
+    }
+
+    .mine button{
+        width:26px;
+        height:26px;
+    }
+
+    .g2048{
+        grid-template-columns:repeat(4,58px);
+    }
+
+    .g2048 div{
+        width:58px;
+        height:58px;
+    }
 }
 </style>
 </head>
@@ -692,1594 +1019,3647 @@ button,input,textarea{font:inherit}
 
 <div id="desktop">
 
-<div class="desktop-icons">
+    <div id="icons"></div>
 
-<div class="desktop-icon" ondblclick="openApp('files')">
-<div class="emoji">📁</div><span>Dateien</span>
-</div>
-
-<div class="desktop-icon" ondblclick="openApp('browser')">
-<div class="emoji">🌐</div><span>Browser</span>
-</div>
-
-<div class="desktop-icon" ondblclick="openApp('terminal')">
-<div class="emoji">⌨️</div><span>Terminal</span>
-</div>
-
-<div class="desktop-icon" ondblclick="openApp('store')">
-<div class="emoji">🛍️</div><span>App Store</span>
-</div>
-
-<div class="desktop-icon" ondblclick="openApp('snake')">
-<div class="emoji">🐍</div><span>Snake</span>
-</div>
-
-<div class="desktop-icon" ondblclick="openApp('paint')">
-<div class="emoji">🎨</div><span>Paint</span>
-</div>
-
-<div class="desktop-icon" ondblclick="openApp('notes')">
-<div class="emoji">📝</div><span>Notizen</span>
-</div>
-
-<div class="desktop-icon" ondblclick="openApp('users')">
-<div class="emoji">👥</div><span>Benutzer</span>
-</div>
-
-</div>
-
-
-<!-- FILE EXPLORER -->
-
-<div class="window" id="files">
-
-<div class="titlebar">
-<div class="title">📁 Datei-Explorer</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('files')">−</div>
-<div class="winBtn" onclick="maximize('files')">□</div>
-<div class="winBtn close" onclick="closeApp('files')">×</div>
-</div>
-</div>
-
-<div class="content explorer">
-
-<div class="sidebar">
-<div class="side">🏠 Start</div>
-<div class="side">🖥️ Dieser PC</div>
-<div class="side">📄 Dokumente</div>
-<div class="side">🖼️ Bilder</div>
-<div class="side">🎵 Musik</div>
-<div class="side">⬇️ Downloads</div>
-</div>
-
-<div class="fileArea">
-
-<div class="toolbar">
-<button class="btn" onclick="newFile()">＋ Datei</button>
-<button class="btn" onclick="uploadFile()">⬆ Hochladen</button>
-<button class="btn" onclick="notify('Dateien werden lokal gespeichert')">💾 Speichern</button>
-</div>
-
-<div id="fileGrid" class="fileGrid"></div>
-
-</div>
-</div>
-</div>
-
-
-<!-- BROWSER -->
-
-<div class="window" id="browser">
-
-<div class="titlebar">
-<div class="title">🌐 VOS Browser</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('browser')">−</div>
-<div class="winBtn" onclick="maximize('browser')">□</div>
-<div class="winBtn close" onclick="closeApp('browser')">×</div>
-</div>
-</div>
-
-<div class="content browser">
-
-<div class="browserBar">
-<button class="btn" onclick="goBack()">←</button>
-<button class="btn" onclick="goForward()">→</button>
-<button class="btn" onclick="browserHome()">⌂</button>
-
-<input id="url" placeholder="Adresse oder Suche..."
-onkeydown="if(event.key==='Enter')navigate()">
-
-<button class="btn" onclick="navigate()">Los</button>
-</div>
-
-<iframe id="browserFrame" class="browserFrame"
-sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin"></iframe>
-
-</div>
-</div>
-
-
-<!-- TERMINAL -->
-
-<div class="window" id="terminal">
-
-<div class="titlebar">
-<div class="title">⌨️ VOS Terminal</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('terminal')">−</div>
-<div class="winBtn" onclick="maximize('terminal')">□</div>
-<div class="winBtn close" onclick="closeApp('terminal')">×</div>
-</div>
-</div>
-
-<div class="content terminal" id="terminalBox">
-
-<div class="termLine">VOS Terminal [Version 2.0]</div>
-<div class="termLine">Schreibe "help" für Befehle.</div>
-<br>
-
-<div>
-VOS&gt;
-<input class="termInput" id="termInput"
-onkeydown="terminalCommand(event)">
-</div>
-
-</div>
-</div>
-
-
-<!-- NOTES -->
-
-<div class="window" id="notes">
-
-<div class="titlebar">
-<div class="title">📝 Notizen</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('notes')">−</div>
-<div class="winBtn" onclick="maximize('notes')">□</div>
-<div class="winBtn close" onclick="closeApp('notes')">×</div>
-</div>
-</div>
-
-<div class="content notes">
-
-<div class="toolbar">
-<button class="btn" onclick="saveNotes()">💾 Speichern</button>
-<button class="btn" onclick="downloadNotes()">⬇ Exportieren</button>
-</div>
-
-<textarea id="notesText" placeholder="Schreibe hier..."></textarea>
-
-</div>
-</div>
-
-
-<!-- CALCULATOR -->
-
-<div class="window" id="calculator">
-
-<div class="titlebar">
-<div class="title">🧮 Rechner</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('calculator')">−</div>
-<div class="winBtn" onclick="maximize('calculator')">□</div>
-<div class="winBtn close" onclick="closeApp('calculator')">×</div>
-</div>
-</div>
-
-<div class="content">
-
-<div class="calculator">
-
-<input class="calcDisplay" id="calc" readonly>
-
-<div class="calcGrid">
-
-<button onclick="calcAdd('C')">C</button>
-<button onclick="calcAdd('(')">(</button>
-<button onclick="calcAdd(')')">)</button>
-<button onclick="calcAdd('/')">÷</button>
-
-<button onclick="calcAdd('7')">7</button>
-<button onclick="calcAdd('8')">8</button>
-<button onclick="calcAdd('9')">9</button>
-<button onclick="calcAdd('*')">×</button>
-
-<button onclick="calcAdd('4')">4</button>
-<button onclick="calcAdd('5')">5</button>
-<button onclick="calcAdd('6')">6</button>
-<button onclick="calcAdd('-')">−</button>
-
-<button onclick="calcAdd('1')">1</button>
-<button onclick="calcAdd('2')">2</button>
-<button onclick="calcAdd('3')">3</button>
-<button onclick="calcAdd('+')">+</button>
-
-<button onclick="calcAdd('0')">0</button>
-<button onclick="calcAdd('.')">.</button>
-<button onclick="calcAdd('⌫')">⌫</button>
-<button onclick="calcResult()">=</button>
-
-</div>
-</div>
-</div>
-</div>
-
-
-<!-- STORE -->
-
-<div class="window" id="store">
-
-<div class="titlebar">
-<div class="title">🛍️ VOS App Store</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('store')">−</div>
-<div class="winBtn" onclick="maximize('store')">□</div>
-<div class="winBtn close" onclick="closeApp('store')">×</div>
-</div>
-</div>
-
-<div class="content store">
-
-<h2>App Store</h2>
-<p style="color:#91a5b8">Installierte und verfügbare Apps</p>
-
-<div class="storeGrid" id="storeGrid"></div>
-
-</div>
-</div>
-
-
-<!-- SNAKE -->
-
-<div class="window" id="snake">
-
-<div class="titlebar">
-<div class="title">🐍 Snake</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('snake')">−</div>
-<div class="winBtn" onclick="maximize('snake')">□</div>
-<div class="winBtn close" onclick="closeApp('snake')">×</div>
-</div>
-</div>
-
-<div class="content game">
-
-<div class="gameInfo">
-<span>🐍 Snake</span>
-<span>Score: <b id="snakeScore">0</b></span>
-</div>
-
-<div class="gameCanvas">
-<canvas id="snakeCanvas"></canvas>
-</div>
-
-<div class="gameControls">
-<button onclick="snakeDirection('up')">▲</button>
-<button onclick="snakeDirection('left')">◀</button>
-<button onclick="snakeDirection('down')">▼</button>
-<button onclick="snakeDirection('right')">▶</button>
-<button onclick="startSnake()">↻</button>
-</div>
-
-</div>
-</div>
-
-
-<!-- PAINT -->
-
-<div class="window" id="paint">
-
-<div class="titlebar">
-<div class="title">🎨 Paint</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('paint')">−</div>
-<div class="winBtn" onclick="maximize('paint')">□</div>
-<div class="winBtn close" onclick="closeApp('paint')">×</div>
-</div>
-</div>
-
-<div class="content paint">
-
-<div class="toolbar">
-<button class="btn" onclick="clearPaint()">🗑️ Löschen</button>
-<button class="btn" onclick="downloadPaint()">⬇ Speichern</button>
-<input type="color" id="paintColor" value="#000000">
-</div>
-
-<canvas id="paintCanvas"></canvas>
-
-</div>
-</div>
-
-
-<!-- USERS -->
+    <div id="clockTop">
+        <div class="bigTime" id="topTime">00:00</div>
+        <div class="smallDate" id="topDate">—</div>
+    </div>
 
-<div class="window" id="users">
+    <div id="windows"></div>
 
-<div class="titlebar">
-<div class="title">👥 Benutzer</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('users')">−</div>
-<div class="winBtn" onclick="maximize('users')">□</div>
-<div class="winBtn close" onclick="closeApp('users')">×</div>
-</div>
-</div>
-
-<div class="content users">
-
-<h2>Benutzerkonten</h2>
-
-<div class="userGrid" id="userGrid"></div>
-
-<button class="btn" onclick="createUser()">＋ Benutzer hinzufügen</button>
-
-</div>
-</div>
-
-
-<!-- SETTINGS -->
-
-<div class="window" id="settings">
-
-<div class="titlebar">
-<div class="title">⚙️ Einstellungen</div>
-<div class="winBtns">
-<div class="winBtn" onclick="minimize('settings')">−</div>
-<div class="winBtn" onclick="maximize('settings')">□</div>
-<div class="winBtn close" onclick="closeApp('settings')">×</div>
-</div>
-</div>
-
-<div class="content settings">
-
-<h2>Systemeinstellungen</h2>
-
-<div class="setting">
-<h3>🎨 Akzentfarbe</h3>
-<input type="color" id="accent" value="#36a9ff">
-<button class="btn" onclick="applyAccent()">Anwenden</button>
-</div>
-
-<div class="setting">
-<h3>👤 Aktiver Benutzer</h3>
-<p id="currentUserSetting"></p>
-<button class="btn" onclick="openApp('users')">Benutzer wechseln</button>
-</div>
-
-<div class="setting">
-<h3>💾 Speicher</h3>
-<p>Deine VOS-Daten werden lokal im Browser gespeichert.</p>
-<button class="btn" onclick="resetVOS()">VOS zurücksetzen</button>
-</div>
+    <div id="startMenu"></div>
 
-</div>
-</div>
-
-
-<!-- START MENU -->
-
-<div id="startMenu">
-
-<div class="startHeader">
-
-<div class="avatar" id="startAvatar">E</div>
-
-<div>
-<strong id="startUser">Erik</strong>
-<small>VOS Benutzerkonto</small>
-</div>
-
-</div>
-
-<input class="startSearch"
-id="appSearch"
-placeholder="Apps suchen..."
-oninput="searchApps()">
+    <div id="taskbar">
 
-<div class="sectionTitle">Apps</div>
+        <button class="tb" id="startBtn">◈</button>
 
-<div class="appsGrid" id="startApps"></div>
+        <div class="taskApps" id="taskApps"></div>
 
-<div class="startBottom">
-<button class="smallButton" onclick="openApp('users')">👥 Benutzer wechseln</button>
-<button class="smallButton" onclick="openApp('settings')">⚙ Einstellungen</button>
-</div>
-
-</div>
-
-
-<!-- TASKBAR -->
-
-<div id="taskbar">
+        <div class="taskUser" id="taskUser"></div>
 
-<div class="startButton" onclick="toggleStart()">⊞</div>
+        <div class="taskClock" id="taskClock">
+            00:00
+        </div>
 
-<div class="taskApps">
-<div class="taskApp" onclick="openApp('files')">📁</div>
-<div class="taskApp" onclick="openApp('browser')">🌐</div>
-<div class="taskApp" onclick="openApp('terminal')">⌨️</div>
-<div class="taskApp" onclick="openApp('store')">🛍️</div>
-<div class="taskApp" onclick="openApp('snake')">🐍</div>
-</div>
-
-<div class="systemTray">
-<span class="online">● Online</span>
-<span id="clock"></span>
-<span>🔊</span>
-<span>📶</span>
-<span>🔋</span>
-</div>
+    </div>
 
 </div>
-
-
-<div id="notification"></div>
-
 
 <script>
+'use strict';
 
-/* =========================
-   APP SYSTEM
-========================= */
+const $ = id => document.getElementById(id);
 
-const apps=[
- {id:"files",name:"Dateien",icon:"📁"},
- {id:"browser",name:"Browser",icon:"🌐"},
- {id:"terminal",name:"Terminal",icon:"⌨️"},
- {id:"notes",name:"Notizen",icon:"📝"},
- {id:"calculator",name:"Rechner",icon:"🧮"},
- {id:"store",name:"App Store",icon:"🛍️"},
- {id:"snake",name:"Snake",icon:"🐍"},
- {id:"paint",name:"Paint",icon:"🎨"},
- {id:"users",name:"Benutzer",icon:"👥"},
- {id:"settings",name:"Einstellungen",icon:"⚙️"}
-];
+const esc = s =>
+    String(s).replace(
+        /[&<>"']/g,
+        c => ({
+            '&':'&amp;',
+            '<':'&lt;',
+            '>':'&gt;',
+            '"':'&quot;',
+            "'":'&#39;'
+        }[c])
+    );
 
-let z=20;
+const apps = {
+
+    browser:['🌐','Browser'],
+    files:['📁','Dateien'],
+    terminal:['⌨️','Terminal'],
+    notes:['📝','Notizen'],
+    calc:['🧮','Rechner'],
+    store:['🛍️','App Store'],
+    todo:['✅','Aufgaben'],
+    calendar:['📅','Kalender'],
+    clock:['⏱️','Uhr'],
+    paint:['🎨','Paint'],
+    system:['💻','System'],
+    users:['👥','Benutzer'],
+    music:['🎵','Musik'],
+
+    snake:['🐍','Snake'],
+    mines:['💣','Minesweeper'],
+    ttt:['⭕','Tic-Tac-Toe'],
+    g2048:['🔢','2048'],
+    clicker:['🖱️','Clicker'],
+    pong:['🏓','Pong']
+
+};
+
+let users =
+    JSON.parse(localStorage.getItem('vos_users') || 'null')
+    ||
+    [
+        {
+            id:'u1',
+            name:'Erik',
+            avatar:'E',
+            color:'#45ff9a'
+        },
+        {
+            id:'guest',
+            name:'Gast',
+            avatar:'G',
+            color:'#68a9ff'
+        }
+    ];
+
+let activeId =
+    localStorage.getItem('vos_active')
+    ||
+    users[0].id;
+
+let z = 120;
+
+let windows = {};
+
+let browserHistory = [];
+
+let browserIndex = -1;
+
+
+/* STORAGE */
+
+function saveUsers(){
+
+    localStorage.setItem(
+        'vos_users',
+        JSON.stringify(users)
+    );
+
+    localStorage.setItem(
+        'vos_active',
+        activeId
+    );
+
+}
+
+function activeUser(){
+
+    return users.find(
+        u => u.id === activeId
+    ) || users[0];
+
+}
+
+function key(k){
+
+    return 'vos_' + activeId + '_' + k;
+
+}
+
+
+/* WINDOW SYSTEM */
 
 function openApp(id){
 
- const w=document.getElementById(id);
+    $('startMenu').classList.remove('show');
 
- if(!w)return;
+    if(windows[id]){
 
- w.style.display="block";
- w.style.zIndex=++z;
+        windows[id].style.display = 'block';
 
- document.querySelectorAll(".window")
- .forEach(x=>x.classList.remove("active"));
+        windows[id].style.zIndex = ++z;
 
- w.classList.add("active");
+        return;
+    }
 
- document.getElementById("startMenu").style.display="none";
+    const [ico,name] = apps[id];
 
- if(id==="snake")setupSnake();
- if(id==="paint")setupPaint();
- if(id==="users")renderUsers();
+    const w = document.createElement('section');
+
+    w.className = 'window open';
+
+    w.id = 'win_' + id;
+
+    w.style.zIndex = ++z;
+
+    w.innerHTML =
+
+        '<div class="titlebar">' +
+
+            '<div class="titleText">' +
+
+                '<span>' + ico + '</span>' +
+
+                '<span>' + name + '</span>' +
+
+            '</div>' +
+
+            '<div class="winBtns">' +
+
+                '<button data-min>—</button>' +
+
+                '<button data-max>□</button>' +
+
+                '<button class="x" data-close>✕</button>' +
+
+            '</div>' +
+
+        '</div>' +
+
+        '<div class="content" id="content_' + id + '"></div>';
+
+    $('windows').appendChild(w);
+
+    windows[id] = w;
+
+    w.querySelector('[data-close]').onclick =
+        () => closeApp(id);
+
+    w.querySelector('[data-min]').onclick =
+        () => w.style.display = 'none';
+
+    w.querySelector('[data-max]').onclick =
+        () => toggleMax(w);
+
+    w.addEventListener(
+        'mousedown',
+        () => w.style.zIndex = ++z
+    );
+
+    drag(
+        w,
+        w.querySelector('.titlebar')
+    );
+
+    renderApp(id);
+
+    renderTasks();
 
 }
 
 function closeApp(id){
- document.getElementById(id).style.display="none";
-}
 
-function minimize(id){
- document.getElementById(id).style.display="none";
-}
+    if(windows[id]){
 
-function maximize(id){
+        windows[id].remove();
 
- const w=document.getElementById(id);
+        delete windows[id];
 
- if(w.dataset.max==="1"){
+        renderTasks();
 
-  w.style.left=w.dataset.left;
-  w.style.top=w.dataset.top;
-  w.style.width=w.dataset.width;
-  w.style.height=w.dataset.height;
-
-  w.dataset.max="0";
-
- }else{
-
-  w.dataset.left=w.style.left;
-  w.dataset.top=w.style.top;
-  w.dataset.width=w.style.width;
-  w.dataset.height=w.style.height;
-
-  w.style.left="0";
-  w.style.top="0";
-  w.style.width="100%";
-  w.style.height="calc(100vh - 64px)";
-
-  w.dataset.max="1";
- }
+    }
 
 }
 
+function toggleMax(w){
 
-/* =========================
-   DRAGGING
-========================= */
+    w.classList.toggle('max');
 
-document.querySelectorAll(".window").forEach(w=>{
+    if(w.classList.contains('max')){
 
- const bar=w.querySelector(".titlebar");
+        w.dataset.old =
+            JSON.stringify({
+                left:w.style.left,
+                top:w.style.top,
+                width:w.style.width,
+                height:w.style.height
+            });
 
- let drag=false;
- let dx=0;
- let dy=0;
+        w.style.left = '1%';
+        w.style.top = '1%';
+        w.style.width = '98%';
+        w.style.height = '88%';
 
- bar.addEventListener("mousedown",e=>{
+    }else{
 
-  if(e.target.closest(".winBtns"))return;
+        let o =
+            JSON.parse(
+                w.dataset.old || '{}'
+            );
 
-  drag=true;
-  dx=e.clientX-w.offsetLeft;
-  dy=e.clientY-w.offsetTop;
+        Object.assign(
+            w.style,
+            o
+        );
 
-  w.style.zIndex=++z;
-
- });
-
- document.addEventListener("mousemove",e=>{
-
-  if(!drag)return;
-
-  if(w.dataset.max==="1")return;
-
-  w.style.left=(e.clientX-dx)+"px";
-  w.style.top=(e.clientY-dy)+"px";
-
- });
-
- document.addEventListener("mouseup",()=>{
-  drag=false;
- });
-
- w.addEventListener("mousedown",()=>{
-  w.style.zIndex=++z;
- });
-
-});
-
-
-/* =========================
-   START
-========================= */
-
-function toggleStart(){
-
- const menu=document.getElementById("startMenu");
-
- menu.style.display=
- menu.style.display==="block"
- ?"none":"block";
+    }
 
 }
 
-function renderApps(){
+function drag(w,bar){
 
- const start=document.getElementById("startApps");
- const store=document.getElementById("storeGrid");
+    let down = false;
 
- start.innerHTML="";
- store.innerHTML="";
+    let sx = 0;
+    let sy = 0;
 
- apps.forEach(app=>{
+    let sl = 0;
+    let st = 0;
 
-  start.innerHTML+=`
-   <div class="appTile" data-name="${app.name.toLowerCase()}"
-        onclick="openApp('${app.id}')">
-    <div class="emoji">${app.icon}</div>
-    <span>${app.name}</span>
-   </div>
-  `;
+    bar.addEventListener(
+        'mousedown',
+        e => {
 
-  store.innerHTML+=`
-   <div class="storeCard">
-    <div class="storeIcon">${app.icon}</div>
-    <h3>${app.name}</h3>
-    <p>VOS Anwendung</p>
-    <button class="btn" onclick="openApp('${app.id}')">
-      Öffnen
-    </button>
-   </div>
-  `;
+            if(e.target.closest('button')) return;
 
- });
+            if(w.classList.contains('max')) return;
 
-}
+            down = true;
 
-renderApps();
+            sx = e.clientX;
+            sy = e.clientY;
 
-function searchApps(){
+            sl = w.offsetLeft;
+            st = w.offsetTop;
 
- const q=document.getElementById("appSearch")
- .value.toLowerCase();
+            w.style.zIndex = ++z;
 
- document.querySelectorAll(".appTile")
- .forEach(a=>{
-  a.style.display=
-   a.dataset.name.includes(q)
-   ?"block":"none";
- });
+        }
+    );
+
+    window.addEventListener(
+        'mousemove',
+        e => {
+
+            if(!down) return;
+
+            w.style.left =
+                Math.max(
+                    0,
+                    sl + e.clientX - sx
+                ) + 'px';
+
+            w.style.top =
+                Math.max(
+                    0,
+                    st + e.clientY - sy
+                ) + 'px';
+
+        }
+    );
+
+    window.addEventListener(
+        'mouseup',
+        () => down = false
+    );
 
 }
 
 
-/* =========================
-   CLOCK
-========================= */
+/* TASKBAR */
 
-function clock(){
+function renderTasks(){
 
- document.getElementById("clock").textContent=
- new Date().toLocaleTimeString("de-DE",{
-  hour:"2-digit",
-  minute:"2-digit"
- });
+    let h = '';
 
-}
+    Object.keys(windows).forEach(
+        id => {
 
-setInterval(clock,1000);
-clock();
+            h +=
+                '<button class="tb" title="' +
+                apps[id][1] +
+                '" onclick="openApp(\'' +
+                id +
+                '\')">' +
+                apps[id][0] +
+                '</button>';
 
+        }
+    );
 
-/* =========================
-   NOTIFICATIONS
-========================= */
-
-let notificationTimer;
-
-function notify(text){
-
- const n=document.getElementById("notification");
-
- n.textContent=text;
- n.style.display="block";
-
- clearTimeout(notificationTimer);
-
- notificationTimer=setTimeout(()=>{
-  n.style.display="none";
- },2500);
+    $('taskApps').innerHTML = h;
 
 }
 
 
-/* =========================
-   USERS
-========================= */
+/* DESKTOP */
 
-let users=JSON.parse(
- localStorage.getItem("vos_users")||"null"
+function renderDesktop(){
+
+    let html = '';
+
+    [
+        ['browser','🌐'],
+        ['files','📁'],
+        ['terminal','⌨️'],
+        ['store','🛍️'],
+        ['snake','🐍'],
+        ['mines','💣'],
+        ['ttt','⭕'],
+        ['g2048','🔢'],
+        ['clicker','🖱️'],
+        ['users','👥']
+    ].forEach(
+        ([id,ico]) => {
+
+            html +=
+
+                '<button class="deskIcon" ' +
+                'ondblclick="openApp(\'' +
+                id +
+                '\')">' +
+
+                '<span class="ico">' +
+                ico +
+                '</span>' +
+
+                '<span>' +
+                apps[id][1] +
+                '</span>' +
+
+                '</button>';
+
+        }
+    );
+
+    $('icons').innerHTML = html;
+
+    updateClock();
+
+    renderTasks();
+
+    renderUser();
+
+}
+
+
+/* USER */
+
+function renderUser(){
+
+    const u = activeUser();
+
+    $('taskUser').innerHTML =
+
+        '<div class="avatar" style="background:' +
+        u.color +
+        '">' +
+
+        esc(u.avatar) +
+
+        '</div>' +
+
+        '<span>' +
+        esc(u.name) +
+        '</span>';
+
+}
+
+
+/* CLOCK */
+
+function updateClock(){
+
+    const d = new Date();
+
+    $('topTime').textContent =
+        d.toLocaleTimeString(
+            'de-DE',
+            {
+                hour:'2-digit',
+                minute:'2-digit',
+                second:'2-digit'
+            }
+        );
+
+    $('topDate').textContent =
+        d.toLocaleDateString(
+            'de-DE',
+            {
+                weekday:'long',
+                day:'2-digit',
+                month:'long',
+                year:'numeric'
+            }
+        );
+
+    $('taskClock').textContent =
+        d.toLocaleTimeString(
+            'de-DE',
+            {
+                hour:'2-digit',
+                minute:'2-digit'
+            }
+        );
+
+}
+
+setInterval(
+    updateClock,
+    1000
 );
 
-if(!users){
 
- users=[
-  {name:"Erik",icon:"E"},
-  {name:"Gast",icon:"👤"}
- ];
+/* START MENU */
 
- localStorage.setItem(
-  "vos_users",
-  JSON.stringify(users)
- );
+$('startBtn').onclick = () => {
 
-}
+    $('startMenu').classList.toggle('show');
 
-let activeUser=
- localStorage.getItem("vos_activeUser")||
- users[0].name;
+    renderStart();
 
-function renderUsers(){
+};
 
- const grid=document.getElementById("userGrid");
+document.addEventListener(
+    'mousedown',
+    e => {
 
- grid.innerHTML="";
+        if(
+            !$('startMenu').contains(e.target) &&
+            e.target !== $('startBtn')
+        ){
 
- users.forEach((u,i)=>{
+            $('startMenu').classList.remove('show');
 
-  grid.innerHTML+=`
+        }
 
-   <div class="userCard">
-
-    <div class="userAvatar">
-      ${u.icon}
-    </div>
-
-    <h3>${u.name}</h3>
-
-    <small>
-      ${u.name===activeUser
-      ?"● Aktiver Benutzer"
-      :"Benutzerkonto"}
-    </small>
-
-    <br>
-
-    <button class="btn"
-      onclick="switchUser(${i})">
-      ${u.name===activeUser
-      ?"Aktiv"
-      :"Anmelden"}
-    </button>
-
-   </div>
-
-  `;
-
- });
-
-}
-
-function switchUser(i){
-
- activeUser=users[i].name;
-
- localStorage.setItem(
-  "vos_activeUser",
-  activeUser
- );
-
- document.getElementById(
-  "startUser"
- ).textContent=activeUser;
-
- document.getElementById(
-  "startAvatar"
- ).textContent=users[i].icon;
-
- document.getElementById(
-  "currentUserSetting"
- ).textContent=activeUser;
-
- renderUsers();
-
- notify("Benutzer gewechselt: "+activeUser);
-
-}
-
-function createUser(){
-
- const name=prompt(
-  "Name des neuen Benutzers:"
- );
-
- if(!name)return;
-
- users.push({
-  name:name,
-  icon:name.charAt(0).toUpperCase()
- });
-
- localStorage.setItem(
-  "vos_users",
-  JSON.stringify(users)
- );
-
- renderUsers();
-
- notify("Benutzer erstellt");
-
-}
-
-
-/* =========================
-   FILE SYSTEM
-========================= */
-
-let files=JSON.parse(
- localStorage.getItem("vos_files")||"null"
+    }
 );
 
-if(!files){
+function renderStart(filter=''){
 
- files=[
-  {name:"Willkommen.txt",type:"file",content:"Willkommen bei VOS!"},
-  {name:"Dokumente",type:"folder"},
-  {name:"Bilder",type:"folder"},
-  {name:"Downloads",type:"folder"}
- ];
+    const q = filter.toLowerCase();
 
- localStorage.setItem(
-  "vos_files",
-  JSON.stringify(files)
- );
+    let list =
+        Object.entries(apps)
+        .filter(
+            ([id,a]) =>
+                (a[1] + ' ' + id)
+                .toLowerCase()
+                .includes(q)
+        );
 
-}
+    $('startMenu').innerHTML =
 
-function renderFiles(){
+        '<div class="profile">' +
 
- const grid=document.getElementById("fileGrid");
+            '<div class="avatar" style="background:' +
+            activeUser().color +
+            '">' +
 
- grid.innerHTML="";
+            esc(activeUser().avatar) +
 
- files.forEach((f,i)=>{
+            '</div>' +
 
-  const div=document.createElement("div");
+            '<div>' +
 
-  div.className="file";
+                '<b>' +
+                esc(activeUser().name) +
+                '</b>' +
 
-  div.innerHTML=`
-   <div class="fileIcon">
-    ${f.type==="folder"?"📁":"📄"}
-   </div>
-   <div>${escapeHTML(f.name)}</div>
-  `;
+                '<div class="muted">' +
+                'Lokales VOS-Konto' +
+                '</div>' +
 
-  div.ondblclick=()=>{
+            '</div>' +
 
-   if(f.type==="file"){
+        '</div>' +
 
-    openApp("notes");
+        '<input class="search" id="appSearch" ' +
+        'placeholder="Apps suchen…" ' +
+        'value="' +
+        esc(filter) +
+        '">' +
 
-    document.getElementById(
-     "notesText"
-    ).value=f.content||"";
+        '<div class="appGrid">' +
 
-   }
+            list.map(
+                ([id,a]) =>
 
-  };
+                    '<button class="appBtn" ' +
+                    'onclick="openApp(\'' +
+                    id +
+                    '\')">' +
 
-  grid.appendChild(div);
+                    '<span class="aico">' +
+                    a[0] +
+                    '</span>' +
 
- });
+                    '<small>' +
+                    a[1] +
+                    '</small>' +
 
-}
+                    '</button>'
+            ).join('') +
 
-function escapeHTML(s){
+        '</div>' +
 
- return s
- .replaceAll("&","&amp;")
- .replaceAll("<","&lt;")
- .replaceAll(">","&gt;")
- .replaceAll('"',"&quot;");
+        '<div class="menuRow">' +
 
-}
+            '<button onclick="openApp(\'users\')">' +
+            '👥 Benutzer wechseln' +
+            '</button>' +
 
-function newFile(){
+            '<button class="green" onclick="openApp(\'store\')">' +
+            '🛍️ Apps' +
+            '</button>' +
 
- const name=prompt(
-  "Dateiname:",
-  "Neue Datei.txt"
- );
+        '</div>';
 
- if(!name)return;
+    $('appSearch').oninput =
+        e => renderStart(e.target.value);
 
- files.push({
-  name:name,
-  type:"file",
-  content:""
- });
-
- localStorage.setItem(
-  "vos_files",
-  JSON.stringify(files)
- );
-
- renderFiles();
-
- notify("Datei erstellt");
+    $('startMenu').classList.add('show');
 
 }
 
-function uploadFile(){
 
- const input=document.createElement("input");
+/* APP ROUTER */
 
- input.type="file";
+function renderApp(id){
 
- input.onchange=async()=>{
+    const c = $('content_' + id);
 
-  const f=input.files[0];
+    const R = {
 
-  if(!f)return;
+        browser:appBrowser,
+        files:appFiles,
+        terminal:appTerminal,
+        notes:appNotes,
+        calc:appCalc,
+        store:appStore,
+        todo:appTodo,
+        calendar:appCalendar,
+        clock:appClock,
+        paint:appPaint,
+        system:appSystem,
+        users:appUsers,
+        music:appMusic,
 
-  const text=await f.text();
+        snake:appSnake,
+        mines:appMines,
+        ttt:appTtt,
+        g2048:app2048,
+        clicker:appClicker,
+        pong:appPong
 
-  files.push({
-   name:f.name,
-   type:"file",
-   content:text
-  });
+    };
 
-  localStorage.setItem(
-   "vos_files",
-   JSON.stringify(files)
-  );
-
-  renderFiles();
-
-  notify(f.name+" importiert");
-
- };
-
- input.click();
+    if(R[id]) R[id](c);
 
 }
 
-renderFiles();
+
+/* BROWSER */
+
+function appBrowser(c){
+
+    c.innerHTML =
+
+        '<div style="height:100%;position:relative">' +
+
+            '<div class="toolbar">' +
+
+                '<button class="btn" id="bback">←</button>' +
+
+                '<button class="btn" id="bfwd">→</button>' +
+
+                '<button class="btn" id="bhome">⌂</button>' +
+
+                '<input id="burl" ' +
+                'placeholder="Adresse oder Suche…">' +
+
+                '<button class="btn green" id="bgo">' +
+                'Los' +
+                '</button>' +
+
+            '</div>' +
+
+            '<div id="browserArea" ' +
+            'style="height:calc(100% - 51px)">' +
+            '</div>' +
+
+            '<div class="blocked" id="blocked">' +
+
+                '<div>' +
+
+                    '<div style="font-size:45px">' +
+                    '🛡️' +
+                    '</div>' +
+
+                    '<h2>' +
+                    'Diese Webseite erlaubt keine Einbettung' +
+                    '</h2>' +
+
+                    '<p>' +
+                    'Das ist eine Sicherheitsregel der Webseite. ' +
+                    'Dein Browser bleibt trotzdem innerhalb des VOS.' +
+                    '</p>' +
+
+                    '<button class="btn" onclick="browserHome()">' +
+                    'Zur VOS-Startseite' +
+                    '</button>' +
+
+                '</div>' +
+
+            '</div>' +
+
+        '</div>';
+
+    const inp = $('burl');
+
+    $('bgo').onclick =
+        () => browserGo(inp.value);
+
+    inp.onkeydown =
+        e => {
+
+            if(e.key === 'Enter')
+                browserGo(e.target.value);
+
+        };
+
+    $('bhome').onclick =
+        browserHome;
+
+    $('bback').onclick =
+        () => browserStep(-1);
+
+    $('bfwd').onclick =
+        () => browserStep(1);
+
+    browserHome();
+
+}
 
 
-/* =========================
-   BROWSER
-========================= */
+/*
+    WICHTIG:
 
-let history=[];
-let historyIndex=-1;
+    Hier wird NICHT sofort Google in ein iframe geladen.
+
+    Deshalb gibt es beim Öffnen des Browsers
+    keine weiße Startseite mehr.
+*/
 
 function browserHome(){
 
- document.getElementById("url").value=
- "https://www.google.com";
+    if(!windows.browser) return;
 
- document.getElementById(
-  "browserFrame"
- ).src="https://www.google.com";
+    const area = $('browserArea');
 
-}
+    $('blocked').classList.remove('show');
 
-function navigate(){
+    area.innerHTML =
 
- let value=document
- .getElementById("url").value.trim();
+        '<div class="browserHome">' +
 
- if(!value)return;
+            '<div class="browserHero">' +
 
- let url;
+                '<div class="browserLogo">🌐</div>' +
 
- if(value.startsWith("http://")||
-    value.startsWith("https://")){
+                '<h1>VOS Browser</h1>' +
 
-  url=value;
+                '<p>' +
+                'Dein Browser läuft direkt innerhalb des virtuellen PCs.' +
+                '</p>' +
 
- }else if(value.includes(".")&&!value.includes(" ")){
+                '<div class="browserSearch">' +
 
-  url="https://"+value;
+                    '<input id="homeSearch" ' +
+                    'placeholder="Suche oder Adresse…">' +
 
- }else{
+                    '<button id="homeGo">' +
+                    'Suchen' +
+                    '</button>' +
 
-  url=
-  "https://www.google.com/search?q="+
-  encodeURIComponent(value);
+                '</div>' +
 
- }
+                '<div class="quick">' +
 
- document.getElementById(
-  "browserFrame"
- ).src=url;
+                    '<button onclick="browserGo(\'https://www.wikipedia.org\')">' +
+                    'Wikipedia' +
+                    '</button>' +
 
- history=history.slice(0,historyIndex+1);
- history.push(url);
- historyIndex++;
+                    '<button onclick="browserGo(\'https://github.com\')">' +
+                    'GitHub' +
+                    '</button>' +
 
-}
+                    '<button onclick="browserGo(\'https://www.mozilla.org\')">' +
+                    'Mozilla' +
+                    '</button>' +
 
-function goBack(){
+                '</div>' +
 
- if(historyIndex>0){
+            '</div>' +
 
-  historyIndex--;
+        '</div>';
 
-  document.getElementById(
-   "browserFrame"
-  ).src=history[historyIndex];
+    $('homeGo').onclick =
+        () => browserGo(
+            $('homeSearch').value
+        );
 
- }
+    $('homeSearch').onkeydown =
+        e => {
 
-}
+            if(e.key === 'Enter')
+                browserGo(e.target.value);
 
-function goForward(){
+        };
 
- if(historyIndex<history.length-1){
-
-  historyIndex++;
-
-  document.getElementById(
-   "browserFrame"
-  ).src=history[historyIndex];
-
- }
+    $('burl').value = 'vos://home';
 
 }
 
-browserHome();
+function normalizeUrl(v){
 
+    v = v.trim();
 
-/* =========================
-   NOTES
-========================= */
+    if(!v) return '';
 
-const notesText=
-document.getElementById("notesText");
+    if(/^https?:\/\//i.test(v))
+        return v;
 
-notesText.value=
-localStorage.getItem("vos_notes")||"";
+    if(
+        v.includes(' ') ||
+        !v.includes('.')
+    ){
 
-function saveNotes(){
+        return (
+            'https://www.google.com/search?q=' +
+            encodeURIComponent(v)
+        );
 
- localStorage.setItem(
-  "vos_notes",
-  notesText.value
- );
+    }
 
- notify("Notizen gespeichert");
-
-}
-
-function downloadNotes(){
-
- const blob=new Blob(
-  [notesText.value],
-  {type:"text/plain"}
- );
-
- const a=document.createElement("a");
-
- a.href=URL.createObjectURL(blob);
- a.download="VOS-Notizen.txt";
- a.click();
-
- URL.revokeObjectURL(a.href);
+    return 'https://' + v;
 
 }
 
+function browserGo(v){
 
-/* =========================
-   CALCULATOR
-========================= */
+    const u = normalizeUrl(v);
 
-function calcAdd(x){
+    if(!u) return;
 
- const d=document.getElementById("calc");
+    const area = $('browserArea');
 
- if(x==="C"){
-  d.value="";
-  return;
- }
+    $('blocked').classList.remove('show');
 
- if(x==="⌫"){
-  d.value=d.value.slice(0,-1);
-  return;
- }
+    area.innerHTML =
 
- d.value+=x;
+        '<iframe class="browserFrame" ' +
+        'id="browserFrame" ' +
+        'referrerpolicy="no-referrer" ' +
+        'src="' +
+        esc(u) +
+        '">' +
+        '</iframe>';
+
+    $('burl').value = u;
+
+    browserHistory =
+        browserHistory.slice(
+            0,
+            browserIndex + 1
+        );
+
+    browserHistory.push(u);
+
+    browserIndex++;
 
 }
 
-function calcResult(){
+function browserStep(dir){
 
- const d=document.getElementById("calc");
+    const n = browserIndex + dir;
 
- try{
+    if(
+        n < 0 ||
+        n >= browserHistory.length
+    ) return;
 
-  if(!/^[0-9+\-*/().\s]+$/.test(d.value))
-   throw 1;
+    browserIndex = n;
 
-  d.value=Function(
-   '"use strict";return('+d.value+')'
-  )();
+    const u = browserHistory[n];
 
- }catch{
+    $('browserArea').innerHTML =
 
-  d.value="Fehler";
+        '<iframe class="browserFrame" ' +
+        'src="' +
+        esc(u) +
+        '">' +
+        '</iframe>';
 
- }
+    $('burl').value = u;
 
 }
 
 
-/* =========================
-   TERMINAL
-========================= */
+/* FILES */
 
-function terminalCommand(e){
+function appFiles(c){
 
- if(e.key!=="Enter")return;
+    let files =
+        JSON.parse(
+            localStorage.getItem(
+                key('files')
+            ) || '[]'
+        );
 
- const input=document.getElementById("termInput");
- const box=document.getElementById("terminalBox");
+    const render = () => {
 
- const command=input.value.trim();
- const line=document.createElement("div");
+        files =
+            JSON.parse(
+                localStorage.getItem(
+                    key('files')
+                ) || '[]'
+            );
 
- line.className="termLine";
- line.textContent="VOS> "+command;
+        c.innerHTML =
 
- box.insertBefore(line,input.parentElement);
+            '<div class="toolbar">' +
 
- let output="";
+                '<button class="btn green" id="newFile">' +
+                '＋ Neue Datei' +
+                '</button>' +
 
- const p=command.split(" ");
- const cmd=p[0].toLowerCase();
+                '<input id="fileUpload" type="file">' +
 
- if(cmd==="help"){
+                '<button class="btn" id="downloadAll">' +
+                'Export' +
+                '</button>' +
 
-  output=
-`Befehle:
-help
-clear
-date
-time
-whoami
-apps
-open [app]
-echo [text]
-system
-users
-browser`;
+            '</div>' +
 
- }else if(cmd==="clear"){
+            '<div class="pad">' +
 
-  box.querySelectorAll(".termLine")
-  .forEach(x=>x.remove());
+                '<div class="fileGrid">' +
 
- }else if(cmd==="date"){
+                    files.map(
+                        (f,i) =>
 
-  output=new Date().toLocaleDateString("de-DE");
+                            '<div class="fileItem">' +
 
- }else if(cmd==="time"){
+                                '<div class="ficon">' +
+                                (
+                                    f.type === 'image'
+                                    ? '🖼️'
+                                    : '📄'
+                                ) +
+                                '</div>' +
 
-  output=new Date().toLocaleTimeString("de-DE");
+                                '<b>' +
+                                esc(f.name) +
+                                '</b>' +
 
- }else if(cmd==="whoami"){
+                                '<div class="muted">' +
+                                esc(f.type) +
+                                '</div>' +
 
-  output=activeUser;
+                                '<button class="btn" ' +
+                                'onclick="openVirtualFile(' +
+                                i +
+                                ')">' +
+                                'Öffnen' +
+                                '</button>' +
 
- }else if(cmd==="users"){
+                            '</div>'
+                    ).join('') +
 
-  output=users.map(x=>x.name).join("\n");
+                '</div>' +
 
- }else if(cmd==="apps"){
+            '</div>';
 
-  output=apps.map(x=>x.name).join("\n");
+        c.querySelector('#newFile').onclick =
+            () => {
 
- }else if(cmd==="system"){
+                let n =
+                    prompt(
+                        'Dateiname',
+                        'Neue Datei.txt'
+                    );
 
-  output=
-`VOS Virtual Operating System
-Version 2.0
-Browser-based environment
-Storage: LocalStorage
-User: ${activeUser}
-Platform: ${navigator.platform}`;
+                if(n){
 
- }else if(cmd==="browser"){
+                    files.push({
+                        name:n,
+                        type:'text',
+                        text:''
+                    });
 
-  openApp("browser");
+                    localStorage.setItem(
+                        key('files'),
+                        JSON.stringify(files)
+                    );
 
- }else if(cmd==="open"){
+                    render();
 
-  const target=p[1]?.toLowerCase();
+                }
 
-  const app=apps.find(
-   x=>x.id===target||
-      x.name.toLowerCase()===target
-  );
+            };
 
-  if(app){
-   openApp(app.id);
-   output="App gestartet.";
-  }else{
-   output="App nicht gefunden.";
-  }
+        c.querySelector('#fileUpload').onchange =
+            e => {
 
- }else if(cmd==="echo"){
+                const f =
+                    e.target.files[0];
 
-  output=p.slice(1).join(" ");
+                if(!f) return;
 
- }else if(command===""){
+                const r =
+                    new FileReader();
 
-  output="";
+                r.onload = () => {
 
- }else{
+                    files.push({
+                        name:f.name,
+                        type:
+                            f.type.startsWith('image/')
+                            ? 'image'
+                            : 'text',
+                        text:r.result
+                    });
 
-  output=`Befehl nicht gefunden: ${cmd}`;
+                    localStorage.setItem(
+                        key('files'),
+                        JSON.stringify(files)
+                    );
 
- }
+                    render();
 
- if(output){
+                };
 
-  const out=document.createElement("div");
+                r.readAsDataURL(f);
 
-  out.className="termLine";
-  out.textContent=output;
+            };
 
-  box.insertBefore(
-   out,
-   input.parentElement
-  );
+        c.querySelector('#downloadAll').onclick =
+            () => {
 
- }
+                const blob =
+                    new Blob(
+                        [
+                            JSON.stringify(
+                                files,
+                                null,
+                                2
+                            )
+                        ],
+                        {
+                            type:
+                                'application/json'
+                        }
+                    );
 
- input.value="";
- box.scrollTop=box.scrollHeight;
+                const a =
+                    document.createElement('a');
+
+                a.href =
+                    URL.createObjectURL(blob);
+
+                a.download =
+                    'vos-files.json';
+
+                a.click();
+
+            };
+
+    };
+
+    render();
+
+}
+
+function openVirtualFile(i){
+
+    let files =
+        JSON.parse(
+            localStorage.getItem(
+                key('files')
+            ) || '[]'
+        );
+
+    const f = files[i];
+
+    if(!f) return;
+
+    if(f.type === 'image'){
+
+        const w = window.open();
+
+        if(w)
+            w.document.write(
+                '<img style="max-width:100%" src="' +
+                f.text +
+                '">'
+            );
+
+    }else{
+
+        const text =
+            prompt(
+                'Datei bearbeiten:',
+                f.text || ''
+            );
+
+        if(text !== null){
+
+            f.text = text;
+
+            localStorage.setItem(
+                key('files'),
+                JSON.stringify(files)
+            );
+
+        }
+
+    }
 
 }
 
 
-/* =========================
-   SNAKE
-========================= */
+/* NOTES */
 
-let snake=[];
-let food={x:10,y:10};
-let dir={x:1,y:0};
-let snakeTimer=null;
-let snakeScore=0;
-let snakeCanvas;
-let snakeCtx;
+function appNotes(c){
 
-function setupSnake(){
+    c.innerHTML =
 
- snakeCanvas=document.getElementById("snakeCanvas");
+        '<div class="toolbar">' +
 
- const rect=
- snakeCanvas.parentElement.getBoundingClientRect();
+            '<button class="btn green" id="saveN">' +
+            'Speichern' +
+            '</button>' +
 
- snakeCanvas.width=Math.max(300,rect.width);
- snakeCanvas.height=Math.max(250,rect.height);
+            '<button class="btn" id="clearN">' +
+            'Leeren' +
+            '</button>' +
 
- snakeCtx=snakeCanvas.getContext("2d");
+            '<span class="muted" id="noteState"></span>' +
 
- if(!snake.length)startSnake();
+        '</div>' +
 
-}
+        '<textarea class="noteArea" id="noteArea" ' +
+        'placeholder="Deine Notizen…"></textarea>';
 
-function startSnake(){
+    const a = $('noteArea');
 
- if(!snakeCanvas)setupSnake();
+    a.value =
+        localStorage.getItem(
+            key('notes')
+        ) || '';
 
- const cols=25;
- const rows=15;
+    $('saveN').onclick =
+        () => {
 
- snake=[
-  {x:8,y:7},
-  {x:7,y:7},
-  {x:6,y:7}
- ];
+            localStorage.setItem(
+                key('notes'),
+                a.value
+            );
 
- food={
-  x:Math.floor(Math.random()*cols),
-  y:Math.floor(Math.random()*rows)
- };
+            $('noteState').textContent =
+                'Gespeichert ✓';
 
- dir={x:1,y:0};
- snakeScore=0;
+            setTimeout(
+                () =>
+                    $('noteState').textContent = '',
+                1200
+            );
 
- document.getElementById(
-  "snakeScore"
- ).textContent=0;
+        };
 
- clearInterval(snakeTimer);
+    $('clearN').onclick =
+        () => {
 
- snakeTimer=setInterval(
-  snakeLoop,
-  130
- );
+            if(confirm('Notiz leeren?'))
+                a.value = '';
 
-}
-
-function snakeDirection(d){
-
- if(d==="up"&&dir.y!==1)dir={x:0,y:-1};
- if(d==="down"&&dir.y!==-1)dir={x:0,y:1};
- if(d==="left"&&dir.x!==1)dir={x:-1,y:0};
- if(d==="right"&&dir.x!==-1)dir={x:1,y:0};
-
-}
-
-document.addEventListener("keydown",e=>{
-
- if(e.key==="ArrowUp")snakeDirection("up");
- if(e.key==="ArrowDown")snakeDirection("down");
- if(e.key==="ArrowLeft")snakeDirection("left");
- if(e.key==="ArrowRight")snakeDirection("right");
-
-});
-
-function snakeLoop(){
-
- const cols=25;
- const rows=15;
-
- const head={
-  x:snake[0].x+dir.x,
-  y:snake[0].y+dir.y
- };
-
- if(
-  head.x<0||
-  head.y<0||
-  head.x>=cols||
-  head.y>=rows||
-  snake.some(s=>s.x===head.x&&s.y===head.y)
- ){
-
-  clearInterval(snakeTimer);
-  notify("Game Over — Score: "+snakeScore);
-  return;
-
- }
-
- snake.unshift(head);
-
- if(head.x===food.x&&head.y===food.y){
-
-  snakeScore++;
-
-  document.getElementById(
-   "snakeScore"
-  ).textContent=snakeScore;
-
-  food={
-   x:Math.floor(Math.random()*cols),
-   y:Math.floor(Math.random()*rows)
-  };
-
- }else{
-
-  snake.pop();
-
- }
-
- drawSnake();
-
-}
-
-function drawSnake(){
-
- if(!snakeCtx)return;
-
- const w=snakeCanvas.width/25;
- const h=snakeCanvas.height/15;
-
- snakeCtx.clearRect(
-  0,0,
-  snakeCanvas.width,
-  snakeCanvas.height
- );
-
- snakeCtx.fillStyle="#07121d";
- snakeCtx.fillRect(
-  0,0,
-  snakeCanvas.width,
-  snakeCanvas.height
- );
-
- snakeCtx.fillStyle="#ff4055";
-
- snakeCtx.fillRect(
-  food.x*w,
-  food.y*h,
-  w-2,
-  h-2
- );
-
- snake.forEach((s,i)=>{
-
-  snakeCtx.fillStyle=
-   i===0?"#55ffa2":"#29c878";
-
-  snakeCtx.fillRect(
-   s.x*w,
-   s.y*h,
-   w-2,
-   h-2
-  );
-
- });
+        };
 
 }
 
 
-/* =========================
-   PAINT
-========================= */
+/* CALCULATOR */
 
-let paintReady=false;
-let painting=false;
-let paintCtx;
+function appCalc(c){
 
-function setupPaint(){
+    c.innerHTML =
 
- if(paintReady)return;
+        '<div class="pad calc">' +
 
- const c=document.getElementById("paintCanvas");
+            '<div class="calcDisplay" id="cd">' +
+            '0' +
+            '</div>' +
 
- c.width=1000;
- c.height=500;
+            '<div class="calcKeys">' +
 
- paintCtx=c.getContext("2d");
+                [
+                    'C','⌫','(',')',
+                    '7','8','9','÷',
+                    '4','5','6','×',
+                    '1','2','3','−',
+                    '0','.','=','+'
+                ]
+                .map(
+                    x =>
 
- paintCtx.fillStyle="white";
- paintCtx.fillRect(0,0,c.width,c.height);
+                        '<button class="' +
+                        (
+                            /[÷×−+]/.test(x)
+                            ? 'op'
+                            : ''
+                        ) +
+                        '" data-k="' +
+                        x +
+                        '">' +
+                        x +
+                        '</button>'
+                )
+                .join('') +
 
- c.addEventListener("pointerdown",e=>{
-  painting=true;
-  paintCtx.beginPath();
-  paintCtx.moveTo(e.offsetX,e.offsetY);
- });
+            '</div>' +
 
- c.addEventListener("pointermove",e=>{
+        '</div>';
 
-  if(!painting)return;
+    let s = '';
 
-  paintCtx.strokeStyle=
-   document.getElementById("paintColor").value;
+    const out = () => {
 
-  paintCtx.lineWidth=5;
-  paintCtx.lineCap="round";
+        $('cd').textContent =
+            s || '0';
 
-  paintCtx.lineTo(e.offsetX,e.offsetY);
-  paintCtx.stroke();
+    };
 
- });
+    c.querySelectorAll('[data-k]')
+        .forEach(
+            b =>
 
- c.addEventListener("pointerup",()=>{
-  painting=false;
- });
+                b.onclick = () => {
 
- c.addEventListener("pointerleave",()=>{
-  painting=false;
- });
+                    let k = b.dataset.k;
 
- paintReady=true;
+                    if(k === 'C')
+                        s = '';
 
-}
+                    else if(k === '⌫')
+                        s = s.slice(0,-1);
 
-function clearPaint(){
+                    else if(k === '='){
 
- if(!paintReady)setupPaint();
+                        try{
 
- paintCtx.fillStyle="white";
+                            let q =
+                                s
+                                .replaceAll('×','*')
+                                .replaceAll('÷','/')
+                                .replaceAll('−','-');
 
- paintCtx.fillRect(
-  0,0,
-  paintCanvas.width,
-  paintCanvas.height
- );
+                            if(
+                                !/^[0-9+\-*/().\s]+$/.test(q)
+                            )
+                                throw 0;
 
-}
+                            s =
+                                String(
+                                    Function(
+                                        'return ' + q
+                                    )()
+                                );
 
-function downloadPaint(){
+                        }catch{
 
- const a=document.createElement("a");
+                            s = 'Fehler';
 
- a.href=document.getElementById(
-  "paintCanvas"
- ).toDataURL();
+                        }
 
- a.download="VOS-Zeichnung.png";
- a.click();
+                    }else{
 
-}
+                        s += k;
 
+                    }
 
-/* =========================
-   SETTINGS
-========================= */
+                    out();
 
-function applyAccent(){
-
- const color=
- document.getElementById("accent").value;
-
- document.documentElement
- .style.setProperty("--accent",color);
-
- localStorage.setItem(
-  "vos_accent",
-  color
- );
-
- notify("Akzentfarbe geändert");
-
-}
-
-const savedAccent=
-localStorage.getItem("vos_accent");
-
-if(savedAccent){
-
- document.documentElement
- .style.setProperty(
-  "--accent",
-  savedAccent
- );
-
- document.getElementById(
-  "accent"
- ).value=savedAccent;
-
-}
-
-function resetVOS(){
-
- if(confirm(
-  "Alle VOS-Daten löschen?"
- )){
-
-  localStorage.clear();
-  location.reload();
-
- }
+                }
+        );
 
 }
 
 
-/* =========================
-   INITIAL USER UI
-========================= */
+/* TERMINAL */
 
-function updateUserUI(){
+function appTerminal(c){
 
- const u=
- users.find(x=>x.name===activeUser)||
- users[0];
+    c.innerHTML =
 
- document.getElementById(
-  "startUser"
- ).textContent=u.name;
+        '<div class="terminal" id="term">' +
 
- document.getElementById(
-  "startAvatar"
- ).textContent=u.icon;
+            '<div>' +
+            'VOS Terminal 1.0 — Tippe ' +
+            '<b>help</b> für Befehle.' +
+            '</div>' +
 
- document.getElementById(
-  "currentUserSetting"
- ).textContent=u.name;
+            '<div class="termInput">' +
+
+                '<span>' +
+                esc(activeUser().name) +
+                '@vos:~$&nbsp;' +
+                '</span>' +
+
+                '<input id="termIn" autocomplete="off">' +
+
+            '</div>' +
+
+        '</div>';
+
+    const t = $('term');
+
+    const inp = $('termIn');
+
+    const line = s => {
+
+        const d =
+            document.createElement('div');
+
+        d.className = 'termLine';
+
+        d.textContent = s;
+
+        t.insertBefore(
+            d,
+            inp.parentElement
+        );
+
+    };
+
+    inp.onkeydown =
+        e => {
+
+            if(e.key !== 'Enter')
+                return;
+
+            const cmd =
+                inp.value.trim();
+
+            line(
+                activeUser().name +
+                '@vos:~$ ' +
+                cmd
+            );
+
+            inp.value = '';
+
+            if(!cmd) return;
+
+            const p =
+                cmd.split(' ');
+
+            const base =
+                p[0].toLowerCase();
+
+            if(base === 'help'){
+
+                line(
+                    'help, clear, date, time, whoami, ' +
+                    'apps, open <app>, echo <text>, ' +
+                    'system, users, calc <ausdruck>'
+                );
+
+            }
+
+            else if(base === 'clear'){
+
+                t.querySelectorAll('.termLine')
+                    .forEach(
+                        x => x.remove()
+                    );
+
+            }
+
+            else if(base === 'date'){
+
+                line(
+                    new Date()
+                    .toLocaleDateString('de-DE')
+                );
+
+            }
+
+            else if(base === 'time'){
+
+                line(
+                    new Date()
+                    .toLocaleTimeString('de-DE')
+                );
+
+            }
+
+            else if(base === 'whoami'){
+
+                line(activeUser().name);
+
+            }
+
+            else if(base === 'apps'){
+
+                line(
+                    Object.entries(apps)
+                    .map(
+                        ([k,v]) =>
+                            k + ' = ' + v[1]
+                    )
+                    .join('\n')
+                );
+
+            }
+
+            else if(
+                base === 'open' &&
+                apps[p[1]]
+            ){
+
+                openApp(p[1]);
+
+            }
+
+            else if(base === 'echo'){
+
+                line(
+                    p.slice(1).join(' ')
+                );
+
+            }
+
+            else if(base === 'system'){
+
+                line(
+                    'VOS • Browser • LocalStorage • ' +
+                    navigator.platform
+                );
+
+            }
+
+            else if(base === 'users'){
+
+                line(
+                    users.map(
+                        u => u.name
+                    ).join(', ')
+                );
+
+            }
+
+            else if(base === 'calc'){
+
+                try{
+
+                    const q =
+                        p
+                        .slice(1)
+                        .join('')
+                        .replace(
+                            /[^0-9+\-*/().]/g,
+                            ''
+                        );
+
+                    line(
+                        String(
+                            Function(
+                                'return ' + q
+                            )()
+                        )
+                    );
+
+                }catch{
+
+                    line(
+                        'Ungültiger Ausdruck'
+                    );
+
+                }
+
+            }
+
+            else{
+
+                line(
+                    'Befehl nicht gefunden: ' +
+                    base
+                );
+
+            }
+
+            t.scrollTop =
+                t.scrollHeight;
+
+        };
 
 }
 
-updateUserUI();
+
+/* APP STORE */
+
+function appStore(c){
+
+    const entries =
+        [
+            ...Object.entries(apps)
+        ]
+        .filter(
+            ([id]) => id !== 'store'
+        )
+        .map(
+            ([id,a]) => ({
+                id,
+                ico:a[0],
+                name:a[1],
+                desc:
+                    'Bereit und direkt im VOS startbar.'
+            })
+        );
+
+    c.innerHTML =
+
+        '<div class="pad">' +
+
+            '<h2>VOS App Store</h2>' +
+
+            '<p class="muted">' +
+            'Keine Installation nötig — alle Apps ' +
+            'laufen lokal in dieser index.html.' +
+            '</p>' +
+
+            '<div class="storeGrid">' +
+
+                entries.map(
+                    a =>
+
+                        '<div class="storeCard">' +
+
+                            '<div class="storeIcon">' +
+                            a.ico +
+                            '</div>' +
+
+                            '<h3>' +
+                            a.name +
+                            '</h3>' +
+
+                            '<p class="muted">' +
+                            a.desc +
+                            '</p>' +
+
+                            '<button class="btn green" ' +
+                            'onclick="openApp(\'' +
+                            a.id +
+                            '\')">' +
+                            'Öffnen' +
+                            '</button>' +
+
+                        '</div>'
+                ).join('') +
+
+            '</div>' +
+
+        '</div>';
+
+}
 
 
-/* =========================
-   GLOBAL SHORTCUTS
-========================= */
+/* TODO */
 
-document.addEventListener("keydown",e=>{
+function appTodo(c){
 
- if(e.key==="Escape"){
+    const k = key('todo');
 
-  document.getElementById(
-   "startMenu"
-  ).style.display="none";
+    let arr =
+        JSON.parse(
+            localStorage.getItem(k) || '[]'
+        );
 
- }
+    const render = () => {
 
- if(e.ctrlKey&&e.altKey&&e.key==="t"){
+        c.innerHTML =
 
-  e.preventDefault();
-  openApp("terminal");
+            '<div class="pad">' +
 
- }
+                '<h2>Aufgaben</h2>' +
 
- if(e.ctrlKey&&e.altKey&&e.key==="b"){
+                '<div class="todo">' +
 
-  e.preventDefault();
-  openApp("browser");
+                    '<input class="input" id="todoIn" ' +
+                    'placeholder="Neue Aufgabe…">' +
 
- }
+                    '<button class="btn green" id="todoAdd">' +
+                    'Hinzufügen' +
+                    '</button>' +
 
-});
+                '</div>' +
+
+                '<div>' +
+
+                    arr.map(
+                        (x,i) =>
+
+                            '<div class="todoItem ' +
+                            (x.done ? 'done' : '') +
+                            '">' +
+
+                                '<input type="checkbox" ' +
+                                (x.done ? 'checked' : '') +
+                                ' data-t="' +
+                                i +
+                                '">' +
+
+                                '<span>' +
+                                esc(x.text) +
+                                '</span>' +
+
+                                '<button data-d="' +
+                                i +
+                                '">' +
+                                '✕' +
+                                '</button>' +
+
+                            '</div>'
+                    ).join('') +
+
+                '</div>' +
+
+            '</div>';
+
+        c.querySelector('#todoAdd').onclick =
+            () => {
+
+                const v =
+                    c.querySelector(
+                        '#todoIn'
+                    ).value.trim();
+
+                if(v){
+
+                    arr.push({
+                        text:v,
+                        done:false
+                    });
+
+                    localStorage.setItem(
+                        k,
+                        JSON.stringify(arr)
+                    );
+
+                    render();
+
+                }
+
+            };
+
+        c.querySelectorAll('[data-t]')
+            .forEach(
+                x =>
+
+                    x.onchange = () => {
+
+                        arr[
+                            x.dataset.t
+                        ].done = x.checked;
+
+                        localStorage.setItem(
+                            k,
+                            JSON.stringify(arr)
+                        );
+
+                        render();
+
+                    }
+            );
+
+        c.querySelectorAll('[data-d]')
+            .forEach(
+                x =>
+
+                    x.onclick = () => {
+
+                        arr.splice(
+                            x.dataset.d,
+                            1
+                        );
+
+                        localStorage.setItem(
+                            k,
+                            JSON.stringify(arr)
+                        );
+
+                        render();
+
+                    }
+            );
+
+    };
+
+    render();
+
+}
 
 
-/* =========================
-   STARTUP
-========================= */
+/* CALENDAR */
 
-notify("VOS wurde gestartet");
+function appCalendar(c){
+
+    const d = new Date();
+
+    const y = d.getFullYear();
+
+    const m = d.getMonth();
+
+    const first =
+        new Date(
+            y,
+            m,
+            1
+        ).getDay();
+
+    const days =
+        new Date(
+            y,
+            m + 1,
+            0
+        ).getDate();
+
+    const start =
+        (first + 6) % 7;
+
+    let h =
+
+        '<div class="pad">' +
+
+            '<h2>' +
+
+            d.toLocaleDateString(
+                'de-DE',
+                {
+                    month:'long',
+                    year:'numeric'
+                }
+            ) +
+
+            '</h2>' +
+
+            '<div class="calendar">' +
+
+                [
+                    'Mo',
+                    'Di',
+                    'Mi',
+                    'Do',
+                    'Fr',
+                    'Sa',
+                    'So'
+                ]
+                .map(
+                    x =>
+                        '<div class="dow">' +
+                        x +
+                        '</div>'
+                )
+                .join('');
+
+    for(let i=0;i<start;i++)
+        h +=
+            '<div class="day empty">·</div>';
+
+    for(let n=1;n<=days;n++)
+        h +=
+
+            '<div class="day ' +
+            (
+                n === d.getDate()
+                ? 'today'
+                : ''
+            ) +
+            '">' +
+            n +
+            '</div>';
+
+    c.innerHTML =
+        h +
+        '</div></div>';
+
+}
+
+
+/* CLOCK */
+
+function appClock(c){
+
+    c.innerHTML =
+
+        '<div class="gameWrap">' +
+
+            '<div class="card" ' +
+            'style="text-align:center;width:min(520px,90%)">' +
+
+                '<div style="font-size:60px" ' +
+                'id="clockBig">' +
+                '00:00:00' +
+                '</div>' +
+
+                '<p class="muted" id="clockFull"></p>' +
+
+                '<div class="menuRow">' +
+
+                    '<button class="btn" id="swStart">' +
+                    'Start' +
+                    '</button>' +
+
+                    '<button class="btn" id="swReset">' +
+                    'Reset' +
+                    '</button>' +
+
+                '</div>' +
+
+                '<div style="font-size:40px;margin-top:20px" ' +
+                'id="sw">' +
+                '00:00.0' +
+                '</div>' +
+
+            '</div>' +
+
+        '</div>';
+
+    let t = 0;
+
+    let run = false;
+
+    let last = 0;
+
+    const tick = now => {
+
+        if(run){
+
+            t += now - last;
+
+            last = now;
+
+            let sec = t / 1000;
+
+            $('sw').textContent =
+                Math.floor(sec / 60)
+                .toString()
+                .padStart(2,'0') +
+                ':' +
+                (sec % 60)
+                .toFixed(1)
+                .padStart(4,'0');
+
+        }
+
+        requestAnimationFrame(tick);
+
+    };
+
+    setInterval(
+        () => {
+
+            const d = new Date();
+
+            $('clockBig').textContent =
+                d.toLocaleTimeString('de-DE');
+
+            $('clockFull').textContent =
+                d.toLocaleDateString(
+                    'de-DE',
+                    {
+                        weekday:'long',
+                        day:'2-digit',
+                        month:'long',
+                        year:'numeric'
+                    }
+                );
+
+        },
+        250
+    );
+
+    $('swStart').onclick =
+        () => {
+
+            run = !run;
+
+            $('swStart').textContent =
+                run ? 'Pause' : 'Start';
+
+            if(run)
+                last = performance.now();
+
+        };
+
+    $('swReset').onclick =
+        () => {
+
+            t = 0;
+
+            $('sw').textContent =
+                '00:00.0';
+
+        };
+
+    requestAnimationFrame(tick);
+
+}
+
+
+/* PAINT */
+
+function appPaint(c){
+
+    c.innerHTML =
+
+        '<div class="paint">' +
+
+            '<div class="paintTools">' +
+
+                '<button id="pclear">⌫</button>' +
+
+                '<button id="perase">◻</button>' +
+
+                '<input id="pcolor" type="color" value="#111111">' +
+
+                '<input id="psize" type="range" min="1" max="35" value="5">' +
+
+            '</div>' +
+
+            '<canvas class="paintCanvas" id="paintCanvas"></canvas>' +
+
+        '</div>';
+
+    const can = $('paintCanvas');
+
+    const ctx = can.getContext('2d');
+
+    function size(){
+
+        can.width =
+            Math.max(
+                300,
+                can.clientWidth * devicePixelRatio
+            );
+
+        can.height =
+            Math.max(
+                250,
+                can.clientHeight * devicePixelRatio
+            );
+
+        ctx.scale(
+            devicePixelRatio,
+            devicePixelRatio
+        );
+
+        ctx.fillStyle = '#fff';
+
+        ctx.fillRect(
+            0,
+            0,
+            can.clientWidth,
+            can.clientHeight
+        );
+
+    }
+
+    setTimeout(
+        size,
+        30
+    );
+
+    let draw = false;
+
+    let last;
+
+    const pos = e => {
+
+        const r =
+            can.getBoundingClientRect();
+
+        return {
+            x:e.clientX-r.left,
+            y:e.clientY-r.top
+        };
+
+    };
+
+    can.onpointerdown =
+        e => {
+
+            draw = true;
+
+            last = pos(e);
+
+        };
+
+    can.onpointerup =
+        () => draw = false;
+
+    can.onpointerleave =
+        () => draw = false;
+
+    can.onpointermove =
+        e => {
+
+            if(!draw) return;
+
+            const p = pos(e);
+
+            ctx.strokeStyle =
+                $('perase').dataset.on
+                ? '#fff'
+                : $('pcolor').value;
+
+            ctx.lineWidth =
+                $('psize').value;
+
+            ctx.lineCap =
+                'round';
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                last.x,
+                last.y
+            );
+
+            ctx.lineTo(
+                p.x,
+                p.y
+            );
+
+            ctx.stroke();
+
+            last = p;
+
+        };
+
+    $('perase').onclick =
+        () => {
+
+            $('perase').dataset.on =
+                $('perase').dataset.on
+                ? ''
+                : '1';
+
+            $('perase').textContent =
+                $('perase').dataset.on
+                ? '✏️'
+                : '◻';
+
+        };
+
+    $('pclear').onclick =
+        () => {
+
+            ctx.fillStyle = '#fff';
+
+            ctx.fillRect(
+                0,
+                0,
+                can.clientWidth,
+                can.clientHeight
+            );
+
+        };
+
+}
+
+
+/* SYSTEM */
+
+function appSystem(c){
+
+    const mem =
+        JSON.stringify(
+            localStorage
+        ).length;
+
+    c.innerHTML =
+
+        '<div class="pad">' +
+
+            '<h2>System</h2>' +
+
+            '<div class="sysgrid">' +
+
+                '<div class="stat">' +
+                '<b>Benutzer</b>' +
+                esc(activeUser().name) +
+                '</div>' +
+
+                '<div class="stat">' +
+                '<b>Browser</b>' +
+                esc(navigator.userAgent.slice(0,70)) +
+                '</div>' +
+
+                '<div class="stat">' +
+                '<b>Plattform</b>' +
+                esc(navigator.platform) +
+                '</div>' +
+
+                '<div class="stat">' +
+                '<b>Sprache</b>' +
+                esc(navigator.language) +
+                '</div>' +
+
+                '<div class="stat">' +
+                '<b>Bildschirm</b>' +
+                innerWidth +
+                ' × ' +
+                innerHeight +
+                '</div>' +
+
+                '<div class="stat">' +
+                '<b>Lokale Daten</b>' +
+                mem +
+                ' Zeichen' +
+                '</div>' +
+
+                '<div class="stat">' +
+                '<b>Online</b>' +
+                (navigator.onLine ? 'Ja' : 'Nein') +
+                '</div>' +
+
+                '<div class="stat">' +
+                '<b>VOS Version</b>' +
+                '2.0 Local' +
+                '</div>' +
+
+            '</div>' +
+
+        '</div>';
+
+}
+
+
+/* USERS */
+
+function appUsers(c){
+
+    const render = () => {
+
+        c.innerHTML =
+
+            '<div class="pad">' +
+
+                '<h2>Benutzer & Konten</h2>' +
+
+                '<p class="muted">' +
+                'Die Konten werden nur lokal in diesem Browser gespeichert.' +
+                '</p>' +
+
+                '<div class="userList">' +
+
+                    users.map(
+                        u =>
+
+                            '<div class="userRow">' +
+
+                                '<div class="avatar" style="background:' +
+                                u.color +
+                                '">' +
+
+                                esc(u.avatar) +
+
+                                '</div>' +
+
+                                '<span>' +
+
+                                    '<b>' +
+                                    esc(u.name) +
+                                    '</b>' +
+
+                                    '<small class="muted"> ' +
+
+                                        (
+                                            u.id === activeId
+                                            ? '(aktiv)'
+                                            : ''
+                                        ) +
+
+                                    '</small>' +
+
+                                '</span>' +
+
+                                '<button onclick="switchUser(\'' +
+                                u.id +
+                                '\')">' +
+                                'Wechseln' +
+                                '</button>' +
+
+                                (
+                                    u.id !== 'u1' &&
+                                    u.id !== 'guest'
+
+                                    ?
+
+                                    '<button onclick="deleteUser(\'' +
+                                    u.id +
+                                    '\')">' +
+                                    'Löschen' +
+                                    '</button>'
+
+                                    :
+
+                                    ''
+                                ) +
+
+                            '</div>'
+                    ).join('') +
+
+                '</div>' +
+
+                '<div class="menuRow">' +
+
+                    '<button class="btn green" id="addUser">' +
+                    '＋ Konto erstellen' +
+                    '</button>' +
+
+                    '<button class="btn" onclick="lockUsers()">' +
+                    '🔒 Kontoauswahl' +
+                    '</button>' +
+
+                '</div>' +
+
+            '</div>';
+
+        c.querySelector('#addUser').onclick =
+            () => {
+
+                const n =
+                    prompt(
+                        'Name des neuen Kontos'
+                    );
+
+                if(!n) return;
+
+                const id =
+                    'u' + Date.now();
+
+                users.push({
+                    id,
+                    name:n.slice(0,20),
+                    avatar:n[0].toUpperCase(),
+                    color:
+                        '#' +
+                        Math.floor(
+                            Math.random()*16777215
+                        )
+                        .toString(16)
+                        .padStart(6,'0')
+                });
+
+                saveUsers();
+
+                render();
+
+            };
+
+    };
+
+    render();
+
+}
+
+function switchUser(id){
+
+    if(
+        !users.some(
+            u => u.id === id
+        )
+    ) return;
+
+    activeId = id;
+
+    saveUsers();
+
+    renderUser();
+
+    renderDesktop();
+
+    Object.keys(windows)
+        .forEach(closeApp);
+
+    openApp('users');
+
+}
+
+function deleteUser(id){
+
+    if(
+        confirm(
+            'Benutzer löschen?'
+        )
+    ){
+
+        users =
+            users.filter(
+                u => u.id !== id
+            );
+
+        saveUsers();
+
+        if(windows.users)
+            appUsers(
+                $('content_users')
+            );
+
+    }
+
+}
+
+function lockUsers(){
+
+    const ov =
+        document.createElement('div');
+
+    ov.style =
+        'position:fixed;' +
+        'inset:0;' +
+        'background:rgba(2,7,11,.97);' +
+        'z-index:20000;' +
+        'display:grid;' +
+        'place-items:center';
+
+    ov.innerHTML =
+
+        '<div style="width:min(600px,90%);text-align:center">' +
+
+            '<div style="font-size:55px">◈</div>' +
+
+            '<h1>VOS Konto auswählen</h1>' +
+
+            '<div class="userList">' +
+
+                users.map(
+                    u =>
+
+                        '<button class="userRow" ' +
+                        'style="text-align:left" ' +
+                        'onclick="activeId=\'' +
+                        u.id +
+                        '\';saveUsers();location.reload()">' +
+
+                            '<div class="avatar" style="background:' +
+                            u.color +
+                            '">' +
+
+                            esc(u.avatar) +
+
+                            '</div>' +
+
+                            '<span>' +
+                            esc(u.name) +
+                            '</span>' +
+
+                        '</button>'
+                ).join('') +
+
+            '</div>' +
+
+        '</div>';
+
+    document.body.appendChild(ov);
+
+}
+
+
+/* MUSIC */
+
+function appMusic(c){
+
+    c.innerHTML =
+
+        '<div class="music">' +
+
+            '<div>' +
+
+                '<div class="cover">🎵</div>' +
+
+                '<h2>Lokaler Musikplayer</h2>' +
+
+                '<p class="muted">' +
+                'Wähle eine Audiodatei von deinem Gerät.' +
+                '</p>' +
+
+                '<input id="musicFile" ' +
+                'type="file" accept="audio/*">' +
+
+                '<div style="margin-top:20px">' +
+
+                    '<audio id="audio" controls ' +
+                    'style="width:min(450px,90vw)">' +
+
+                    '</audio>' +
+
+                '</div>' +
+
+            '</div>' +
+
+        '</div>';
+
+    $('musicFile').onchange =
+        e => {
+
+            const f =
+                e.target.files[0];
+
+            if(f)
+                $('audio').src =
+                    URL.createObjectURL(f);
+
+        };
+
+}
+
+
+/* SNAKE */
+
+function appSnake(c){
+
+    c.innerHTML =
+
+        '<div class="gameWrap">' +
+
+            '<div>' +
+
+                '<div class="score">' +
+                'Snake: ' +
+                '<span id="snakeScore">0</span>' +
+                '</div>' +
+
+                '<canvas id="snakeC" class="gameCanvas" ' +
+                'width="400" height="400"></canvas>' +
+
+                '<p class="muted" style="text-align:center">' +
+                'Pfeiltasten / WASD · Neustart mit Enter' +
+                '</p>' +
+
+            '</div>' +
+
+        '</div>';
+
+    const can = $('snakeC');
+
+    const ctx = can.getContext('2d');
+
+    const N = 20;
+
+    const S = 20;
+
+    let snake = [
+        {
+            x:10,
+            y:10
+        }
+    ];
+
+    let dir = {
+        x:1,
+        y:0
+    };
+
+    let food = {
+        x:5,
+        y:5
+    };
+
+    let score = 0;
+
+    let running = true;
+
+    const foodNew = () => {
+
+        do{
+
+            food = {
+                x:Math.floor(Math.random()*N),
+                y:Math.floor(Math.random()*N)
+            };
+
+        }while(
+            snake.some(
+                p =>
+                    p.x === food.x &&
+                    p.y === food.y
+            )
+        );
+
+    };
+
+    document.onkeydown =
+        e => {
+
+            const k =
+                e.key.toLowerCase();
+
+            if(k === 'enter'){
+
+                snake = [
+                    {
+                        x:10,
+                        y:10
+                    }
+                ];
+
+                dir = {
+                    x:1,
+                    y:0
+                };
+
+                score = 0;
+
+                running = true;
+
+                return;
+
+            }
+
+            const m = {
+
+                arrowup:[0,-1],
+                w:[0,-1],
+
+                arrowdown:[0,1],
+                s:[0,1],
+
+                arrowleft:[-1,0],
+                a:[-1,0],
+
+                arrowright:[1,0],
+                d:[1,0]
+
+            };
+
+            if(m[k]){
+
+                const [x,y] = m[k];
+
+                if(
+                    x !== -dir.x ||
+                    y !== -dir.y
+                ){
+
+                    dir = {
+                        x,
+                        y
+                    };
+
+                }
+
+            }
+
+        };
+
+    setInterval(
+        () => {
+
+            if(!running) return;
+
+            let h = {
+
+                x:
+                    snake[0].x +
+                    dir.x,
+
+                y:
+                    snake[0].y +
+                    dir.y
+
+            };
+
+            if(
+                h.x < 0 ||
+                h.y < 0 ||
+                h.x >= N ||
+                h.y >= N ||
+                snake.some(
+                    p =>
+                        p.x === h.x &&
+                        p.y === h.y
+                )
+            ){
+
+                running = false;
+
+                return;
+
+            }
+
+            snake.unshift(h);
+
+            if(
+                h.x === food.x &&
+                h.y === food.y
+            ){
+
+                score++;
+
+                $('snakeScore').textContent =
+                    score;
+
+                foodNew();
+
+            }else{
+
+                snake.pop();
+
+            }
+
+        },
+        110
+    );
+
+    setInterval(
+        () => {
+
+            ctx.fillStyle =
+                '#05090d';
+
+            ctx.fillRect(
+                0,
+                0,
+                400,
+                400
+            );
+
+            ctx.fillStyle =
+                '#45ff9a';
+
+            snake.forEach(
+                p =>
+                    ctx.fillRect(
+                        p.x*S+1,
+                        p.y*S+1,
+                        S-2,
+                        S-2
+                    )
+            );
+
+            ctx.fillStyle =
+                '#ff6078';
+
+            ctx.beginPath();
+
+            ctx.arc(
+                food.x*S+10,
+                food.y*S+10,
+                7,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+        },
+        40
+    );
+
+}
+
+
+/* MINESWEEPER */
+
+function appMines(c){
+
+    c.innerHTML =
+
+        '<div class="gameWrap">' +
+
+            '<div>' +
+
+                '<div class="score">' +
+                'Minesweeper ' +
+                '<span id="mineStatus">' +
+                '12 Minen' +
+                '</span>' +
+                '</div>' +
+
+                '<div class="mine" id="mineGrid"></div>' +
+
+                '<p class="muted">' +
+                'Linksklick öffnen · Rechtsklick Flagge' +
+                '</p>' +
+
+            '</div>' +
+
+        '</div>';
+
+    const grid = $('mineGrid');
+
+    const N = 10;
+
+    const M = 12;
+
+    let cells = [];
+
+    function start(){
+
+        cells =
+            Array.from(
+                {
+                    length:N*N
+                },
+                () => ({
+                    mine:false,
+                    open:false,
+                    flag:false,
+                    n:0
+                })
+            );
+
+        let set = new Set();
+
+        while(set.size < M)
+            set.add(
+                Math.floor(
+                    Math.random()*N*N
+                )
+            );
+
+        set.forEach(
+            i =>
+                cells[i].mine = true
+        );
+
+        for(let i=0;i<100;i++){
+
+            let x = i % N;
+
+            let y = Math.floor(i/N);
+
+            cells[i].n =
+                neighbors(x,y)
+                .filter(
+                    j => cells[j].mine
+                ).length;
+
+        }
+
+        render();
+
+    }
+
+    function neighbors(x,y){
+
+        let a = [];
+
+        for(let dy=-1;dy<=1;dy++)
+            for(let dx=-1;dx<=1;dx++){
+
+                if(dx || dy){
+
+                    let X = x + dx;
+
+                    let Y = y + dy;
+
+                    if(
+                        X >= 0 &&
+                        X < N &&
+                        Y >= 0 &&
+                        Y < N
+                    ){
+
+                        a.push(
+                            Y*N+X
+                        );
+
+                    }
+
+                }
+
+            }
+
+        return a;
+
+    }
+
+    function open(i){
+
+        let q = [i];
+
+        while(q.length){
+
+            let j = q.pop();
+
+            let v = cells[j];
+
+            if(v.open || v.flag)
+                continue;
+
+            v.open = true;
+
+            if(v.mine){
+
+                cells.forEach(
+                    x =>
+                        x.open = x.mine
+                );
+
+                render();
+
+                $('mineStatus').textContent =
+                    '💥 verloren — Doppelklick zum Neustart';
+
+                return;
+
+            }
+
+            if(v.n === 0){
+
+                const x = j % N;
+
+                const y = Math.floor(j/N);
+
+                neighbors(x,y)
+                    .forEach(
+                        k => {
+
+                            if(!cells[k].open)
+                                q.push(k);
+
+                        }
+                    );
+
+            }
+
+        }
+
+        render();
+
+        if(
+            cells.every(
+                v => v.open || v.mine
+            )
+        ){
+
+            $('mineStatus').textContent =
+                '🎉 geschafft!';
+
+        }
+
+    }
+
+    function render(){
+
+        grid.innerHTML =
+            cells.map(
+                (v,i) =>
+
+                    '<button class="' +
+
+                    (
+                        v.open
+                        ? 'open '
+                        : ''
+                    ) +
+
+                    (
+                        v.flag
+                        ? 'flag'
+                        : ''
+                    ) +
+
+                    '" data-i="' +
+                    i +
+                    '">' +
+
+                    (
+                        v.open
+                        ? (
+                            v.mine
+                            ? '💣'
+                            : v.n || ''
+                        )
+                        : (
+                            v.flag
+                            ? '⚑'
+                            : ''
+                        )
+                    ) +
+
+                    '</button>'
+            ).join('');
+
+        grid.querySelectorAll('button')
+            .forEach(
+                b => {
+
+                    b.onclick =
+                        () =>
+                            open(
+                                +b.dataset.i
+                            );
+
+                    b.oncontextmenu =
+                        e => {
+
+                            e.preventDefault();
+
+                            cells[
+                                +b.dataset.i
+                            ].flag =
+                                !cells[
+                                    +b.dataset.i
+                                ].flag;
+
+                            render();
+
+                        };
+
+                }
+            );
+
+    }
+
+    grid.ondblclick = () => start();
+
+    start();
+
+}
+
+
+/* TIC TAC TOE */
+
+function appTtt(c){
+
+    c.innerHTML =
+
+        '<div class="gameWrap">' +
+
+            '<div>' +
+
+                '<div class="score" id="tttMsg">' +
+                'Du bist X' +
+                '</div>' +
+
+                '<div class="ttt" id="tttGrid"></div>' +
+
+                '<button class="btn green" ' +
+                'style="width:100%;margin-top:10px" ' +
+                'id="tttReset">' +
+                'Neues Spiel' +
+                '</button>' +
+
+            '</div>' +
+
+        '</div>';
+
+    let a = Array(9).fill('');
+
+    let over = false;
+
+    function win(p){
+
+        return [
+
+            [0,1,2],
+            [3,4,5],
+            [6,7,8],
+            [0,3,6],
+            [1,4,7],
+            [2,5,8],
+            [0,4,8],
+            [2,4,6]
+
+        ].some(
+            x =>
+                x.every(
+                    i => a[i] === p
+                )
+        );
+
+    }
+
+    function render(){
+
+        $('tttGrid').innerHTML =
+            a.map(
+                (x,i) =>
+                    '<button data-i="' +
+                    i +
+                    '">' +
+                    x +
+                    '</button>'
+            ).join('');
+
+        $('tttGrid')
+            .querySelectorAll('button')
+            .forEach(
+                b =>
+                    b.onclick =
+                        () =>
+                            move(
+                                +b.dataset.i
+                            )
+            );
+
+    }
+
+    function move(i){
+
+        if(over || a[i])
+            return;
+
+        a[i] = 'X';
+
+        if(win('X')){
+
+            over = true;
+
+            $('tttMsg').textContent =
+                'Du gewinnst!';
+
+            render();
+
+            return;
+
+        }
+
+        if(a.every(Boolean)){
+
+            over = true;
+
+            $('tttMsg').textContent =
+                'Unentschieden';
+
+            render();
+
+            return;
+
+        }
+
+        const empty =
+            a.map(
+                (v,j) =>
+                    v ? null : j
+            )
+            .filter(
+                v => v !== null
+            );
+
+        const pick =
+            empty[
+                Math.floor(
+                    Math.random() *
+                    empty.length
+                )
+            ];
+
+        a[pick] = 'O';
+
+        if(win('O')){
+
+            over = true;
+
+            $('tttMsg').textContent =
+                'O gewinnt';
+
+        }
+
+        else if(a.every(Boolean)){
+
+            over = true;
+
+            $('tttMsg').textContent =
+                'Unentschieden';
+
+        }
+
+        render();
+
+    }
+
+    $('tttReset').onclick =
+        () => {
+
+            a = Array(9).fill('');
+
+            over = false;
+
+            $('tttMsg').textContent =
+                'Du bist X';
+
+            render();
+
+        };
+
+    render();
+
+}
+
+
+/* 2048 */
+
+function app2048(c){
+
+    c.innerHTML =
+
+        '<div class="gameWrap">' +
+
+            '<div>' +
+
+                '<div class="score">' +
+                '2048 · ' +
+                '<span id="s2048">0</span>' +
+                '</div>' +
+
+                '<div class="g2048" id="g2048"></div>' +
+
+                '<p class="muted">' +
+                'Pfeiltasten / WASD' +
+                '</p>' +
+
+            '</div>' +
+
+        '</div>';
+
+    let a = Array(16).fill(0);
+
+    let score = 0;
+
+    const add = () => {
+
+        let e =
+            a.map(
+                (v,i) =>
+                    v ? null : i
+            )
+            .filter(
+                v => v !== null
+            );
+
+        if(e.length){
+
+            a[
+                e[
+                    Math.floor(
+                        Math.random() *
+                        e.length
+                    )
+                ]
+            ] = 2;
+
+        }
+
+    };
+
+    const line = row => {
+
+        row =
+            row.filter(Boolean);
+
+        for(
+            let i=0;
+            i<row.length-1;
+            i++
+        ){
+
+            if(
+                row[i] ===
+                row[i+1]
+            ){
+
+                row[i] *= 2;
+
+                score += row[i];
+
+                row[i+1] = 0;
+
+            }
+
+        }
+
+        row =
+            row.filter(Boolean);
+
+        while(row.length < 4)
+            row.push(0);
+
+        return row;
+
+    };
+
+    function move(dir){
+
+        let old = a.join();
+
+        if(
+            dir === 'L' ||
+            dir === 'R'
+        ){
+
+            for(
+                let y=0;
+                y<4;
+                y++
+            ){
+
+                let r =
+                    a.slice(
+                        y*4,
+                        y*4+4
+                    );
+
+                if(dir === 'R')
+                    r.reverse();
+
+                r = line(r);
+
+                if(dir === 'R')
+                    r.reverse();
+
+                for(
+                    let x=0;
+                    x<4;
+                    x++
+                ){
+
+                    a[
+                        y*4+x
+                    ] = r[x];
+
+                }
+
+            }
+
+        }else{
+
+            for(
+                let x=0;
+                x<4;
+                x++
+            ){
+
+                let r = [
+                    a[x],
+                    a[x+4],
+                    a[x+8],
+                    a[x+12]
+                ];
+
+                if(dir === 'D')
+                    r.reverse();
+
+                r = line(r);
+
+                if(dir === 'D')
+                    r.reverse();
+
+                for(
+                    let y=0;
+                    y<4;
+                    y++
+                ){
+
+                    a[
+                        y*4+x
+                    ] = r[y];
+
+                }
+
+            }
+
+        }
+
+        if(a.join() !== old)
+            add();
+
+        render();
+
+    }
+
+    function render(){
+
+        $('g2048').innerHTML =
+            a.map(
+                v =>
+                    '<div>' +
+                    (v || '') +
+                    '</div>'
+            ).join('');
+
+        $('s2048').textContent =
+            score;
+
+    }
+
+    document.onkeydown =
+        e => {
+
+            const m = {
+
+                arrowleft:'L',
+                a:'L',
+
+                arrowright:'R',
+                d:'R',
+
+                arrowup:'U',
+                w:'U',
+
+                arrowdown:'D',
+                s:'D'
+
+            };
+
+            const dir =
+                m[
+                    e.key.toLowerCase()
+                ];
+
+            if(dir)
+                move(dir);
+
+        };
+
+    add();
+
+    add();
+
+    render();
+
+}
+
+
+/* CLICKER */
+
+function appClicker(c){
+
+    c.innerHTML =
+
+        '<div class="gameWrap">' +
+
+            '<div class="clicker">' +
+
+                '<h2>VOS Clicker</h2>' +
+
+                '<div>' +
+                'Coins: ' +
+                '<b id="coins">0</b>' +
+                '</div>' +
+
+                '<button class="clickCoin" id="coin">' +
+                '◈' +
+                '</button>' +
+
+                '<div class="menuRow">' +
+
+                    '<button class="btn" id="upgrade">' +
+                    'Upgrade +1 · 25' +
+                    '</button>' +
+
+                    '<button class="btn" id="auto">' +
+                    'Auto · 100' +
+                    '</button>' +
+
+                '</div>' +
+
+                '<p class="muted">' +
+
+                    'Power: ' +
+                    '<span id="power">1</span>' +
+
+                    ' · Auto: ' +
+
+                    '<span id="autos">0</span>' +
+
+                '</p>' +
+
+            '</div>' +
+
+        '</div>';
+
+    let coins =
+        Number(
+            localStorage.getItem(
+                key('coins')
+            ) || 0
+        );
+
+    let power = 1;
+
+    let auto = 0;
+
+    function render(){
+
+        $('coins').textContent =
+            coins;
+
+        $('power').textContent =
+            power;
+
+        $('autos').textContent =
+            auto;
+
+        localStorage.setItem(
+            key('coins'),
+            coins
+        );
+
+    }
+
+    $('coin').onclick =
+        () => {
+
+            coins += power;
+
+            render();
+
+        };
+
+    $('upgrade').onclick =
+        () => {
+
+            if(coins >= 25){
+
+                coins -= 25;
+
+                power++;
+
+                render();
+
+            }
+
+        };
+
+    $('auto').onclick =
+        () => {
+
+            if(coins >= 100){
+
+                coins -= 100;
+
+                auto++;
+
+                render();
+
+            }
+
+        };
+
+    setInterval(
+        () => {
+
+            if(auto){
+
+                coins += auto;
+
+                render();
+
+            }
+
+        },
+        1000
+    );
+
+    render();
+
+}
+
+
+/* PONG */
+
+function appPong(c){
+
+    c.innerHTML =
+
+        '<div class="gameWrap">' +
+
+            '<div>' +
+
+                '<div class="score">' +
+                'Pong · ' +
+                '<span id="pongScore">0</span>' +
+                '</div>' +
+
+                '<canvas id="pongC" class="gameCanvas" ' +
+                'width="640" height="380"></canvas>' +
+
+                '<p class="muted" style="text-align:center">' +
+                'W/S oder ↑/↓' +
+                '</p>' +
+
+            '</div>' +
+
+        '</div>';
+
+    const can = $('pongC');
+
+    const ctx = can.getContext('2d');
+
+    let py = 150;
+
+    let by = 170;
+
+    let bx = 320;
+
+    let vx = 4;
+
+    let vy = 3;
+
+    let score = 0;
+
+    let keys = {};
+
+    document.onkeydown =
+        e =>
+            keys[
+                e.key.toLowerCase()
+            ] = true;
+
+    document.onkeyup =
+        e =>
+            keys[
+                e.key.toLowerCase()
+            ] = false;
+
+    setInterval(
+        () => {
+
+            if(
+                keys.w ||
+                keys.arrowup
+            )
+                py -= 6;
+
+            if(
+                keys.s ||
+                keys.arrowdown
+            )
+                py += 6;
+
+            py =
+                Math.max(
+                    0,
+                    Math.min(
+                        300,
+                        py
+                    )
+                );
+
+            bx += vx;
+
+            by += vy;
+
+            if(
+                by < 0 ||
+                by > 360
+            )
+                vy *= -1;
+
+            if(
+                bx < 35 &&
+                by > py &&
+                by < py + 80
+            )
+                vx = Math.abs(vx);
+
+            if(
+                bx > 605 &&
+                by > 150 &&
+                by < 230
+            )
+                vx = -Math.abs(vx);
+
+            if(bx < 0){
+
+                score = 0;
+
+                bx = 320;
+
+                by = 170;
+
+                vx = 4;
+
+            }
+
+            if(bx > 640){
+
+                score++;
+
+                bx = 320;
+
+                by = 170;
+
+                vx = -4;
+
+            }
+
+            $('pongScore').textContent =
+                score;
+
+            ctx.fillStyle =
+                '#05090d';
+
+            ctx.fillRect(
+                0,
+                0,
+                640,
+                380
+            );
+
+            ctx.strokeStyle =
+                '#25414f';
+
+            ctx.setLineDash([
+                8,
+                10
+            ]);
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                320,
+                0
+            );
+
+            ctx.lineTo(
+                320,
+                380
+            );
+
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+
+            ctx.fillStyle =
+                '#45ff9a';
+
+            ctx.fillRect(
+                15,
+                py,
+                15,
+                80
+            );
+
+            ctx.fillStyle =
+                '#68a9ff';
+
+            ctx.fillRect(
+                610,
+                150,
+                15,
+                80
+            );
+
+            ctx.fillStyle =
+                '#fff';
+
+            ctx.beginPath();
+
+            ctx.arc(
+                bx,
+                by,
+                8,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+        },
+        16
+    );
+
+}
+
+
+/* START */
+
+renderDesktop();
 
 </script>
 
 </body>
 </html>
-```
